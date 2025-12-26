@@ -633,9 +633,6 @@
       if (special.type === 'lucky') {
         triggerSparkles();
       }
-      if (special.type === 'unlucky') {
-        triggerScreenShake();
-      }
       showToast(special.message);
       return true;
     }
@@ -797,13 +794,6 @@
     }, duration + 500);
   }
 
-  function triggerScreenShake() {
-    document.body.classList.add('screen-shake');
-    setTimeout(() => {
-      document.body.classList.remove('screen-shake');
-    }, 500);
-  }
-
   // ===== VISUAL QUIRKS =====
 
   // Idle 5 minutes: show message
@@ -831,12 +821,6 @@
     }
   }
 
-  // Cursed ideas: subtle screen shake (20% chance)
-  function checkCursedIdea(idea) {
-    if (idea.category === 'cursed' && Math.random() < 0.2) {
-      triggerScreenShake();
-    }
-  }
 
   // ===== RETURNING USER FEATURES =====
   function checkReturningUser() {
@@ -871,6 +855,24 @@
     "404: Motivation not found"
   ];
   let footerMessageIndex = 0;
+  let footerClickTimer = null;
+  let footerClicks = 0;
+
+  function handleFooterClick() {
+    footerClicks++;
+
+    if (footerClickTimer) {
+      clearTimeout(footerClickTimer);
+    }
+
+    footerClickTimer = setTimeout(() => {
+      // Cycle on 3+ clicks
+      if (footerClicks >= 3) {
+        cycleFooterMessage();
+      }
+      footerClicks = 0;
+    }, 400);
+  }
 
   function cycleFooterMessage() {
     footerMessageIndex = (footerMessageIndex + 1) % FOOTER_MESSAGES.length;
@@ -1003,7 +1005,6 @@
       const storage = incrementIdeaCounter(nextIdea.id);
       checkAchievements(storage);
       checkSpecialIdea(nextIdea);
-      checkCursedIdea(nextIdea);
       trackIdeaClick(nextIdea.id);
       resetActivity(); // Reset idle timer on new idea
     }, ANIMATION_DURATION);
@@ -1102,10 +1103,10 @@
       header.addEventListener('click', handleHeaderClick);
     }
 
-    // Footer easter egg - click to cycle messages
+    // Footer easter egg - triple-click to cycle messages
     const footerSpan = document.querySelector('.made-with-love');
     if (footerSpan) {
-      footerSpan.addEventListener('click', cycleFooterMessage);
+      footerSpan.addEventListener('click', handleFooterClick);
       footerSpan.style.cursor = 'pointer';
     }
 
