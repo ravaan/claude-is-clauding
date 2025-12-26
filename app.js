@@ -33,7 +33,8 @@
     "Your future self will thank you... maybe",
     "Productivity is overrated anyway",
     "Claude is still thinking...",
-    "404: Motivation not found"
+    "404: Motivation not found",
+    "↑↑↓↓←→←→... you know the rest"
   ];
 
   // ===== DOM ELEMENTS =====
@@ -586,7 +587,7 @@
   }
 
   function showHelpToast() {
-    showToast("Space/Enter: next | T: theme | S: sound | type 'help' or '?'");
+    showToast("Space/Enter: next | T: theme | S: sound | secrets await...");
   }
 
   // ===== TRIPLE-CLICK HEADER =====
@@ -1046,6 +1047,10 @@
         MILESTONES.ideas100.title,
         MILESTONES.ideas100.message
       );
+      // Delayed hint about secrets
+      setTimeout(() => {
+        showToast("Hint: Old school gamers know a code...");
+      }, 8000);
     }
 
     // 420 ideas - toast
@@ -1099,6 +1104,9 @@
     initAudio();
     initRetroMode();
     checkReturningUser();
+
+    // Console hint for devs
+    console.log("🎮 Psst... try the Konami code");
 
     // Event listeners
     themeToggle.addEventListener('click', toggleTheme);
