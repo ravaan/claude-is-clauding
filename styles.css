@@ -25,6 +25,17 @@ html {
   font-size: 16px;
 }
 
+/* Text selection styling */
+::selection {
+  background: var(--text);
+  color: var(--bg);
+}
+
+::-moz-selection {
+  background: var(--text);
+  color: var(--bg);
+}
+
 body {
   font-family: 'Space Mono', monospace;
   background-color: var(--bg);
@@ -462,21 +473,19 @@ h1 {
   user-select: none;
 }
 
-/* Hover drift effect */
-@keyframes drift {
-  0%, 100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-8px);
-  }
-}
-
-.idea.drifting {
-  animation: drift 2s ease-in-out infinite;
-}
-
-/* Footer clickable */
+/* Footer - non-selectable and clickable */
 .made-with-love {
   transition: opacity 0.2s;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+footer {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.desperate-mode {
+  user-select: none;
+  -webkit-user-select: none;
 }

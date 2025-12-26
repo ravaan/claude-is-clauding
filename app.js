@@ -52,7 +52,6 @@
   let soundsEnabled = true;
   let idleCheckIntervalId = null;
   let lastActivityTime = Date.now();
-  let hoverTimeout = null;
   let footerClickCount = 0;
 
   // ===== STORAGE SYSTEM =====
@@ -807,29 +806,6 @@
 
   // ===== VISUAL QUIRKS =====
 
-  // Hover >5 seconds: idea drifts upward
-  function setupHoverDrift() {
-    slotWindow.addEventListener('mouseenter', () => {
-      hoverTimeout = setTimeout(() => {
-        const currentEl = slotWindow.querySelector('.idea.current');
-        if (currentEl) {
-          currentEl.classList.add('drifting');
-        }
-      }, 5000);
-    });
-
-    slotWindow.addEventListener('mouseleave', () => {
-      if (hoverTimeout) {
-        clearTimeout(hoverTimeout);
-        hoverTimeout = null;
-      }
-      const currentEl = slotWindow.querySelector('.idea.current');
-      if (currentEl) {
-        currentEl.classList.remove('drifting');
-      }
-    });
-  }
-
   // Idle 5 minutes: show message
   function resetActivity() {
     lastActivityTime = Date.now();
@@ -855,9 +831,9 @@
     }
   }
 
-  // Cursed ideas: subtle screen shake
+  // Cursed ideas: subtle screen shake (20% chance)
   function checkCursedIdea(idea) {
-    if (idea.category === 'cursed') {
+    if (idea.category === 'cursed' && Math.random() < 0.2) {
       triggerScreenShake();
     }
   }
@@ -888,8 +864,11 @@
     "Made with love while Claude was clauding",
     "Procrastination as a Service",
     "No AIs were harmed making this",
-    "Still loading... just like your project",
-    "Time well spent, probably"
+    "Time flies when you're avoiding work",
+    "Your future self will thank you... maybe",
+    "Productivity is overrated anyway",
+    "Claude is still thinking...",
+    "404: Motivation not found"
   ];
   let footerMessageIndex = 0;
 
@@ -1110,7 +1089,6 @@
     startIdleCheck();
     initAudio();
     initRetroMode();
-    setupHoverDrift();
     checkReturningUser();
 
     // Event listeners

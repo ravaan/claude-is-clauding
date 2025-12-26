@@ -130,9 +130,9 @@
 ## Phase 4: Low Priority Tasks [4/5]
 
 ### Task 4.1: Visual quirks
-- [x] Hover >5 seconds: idea drifts upward
+- [x] ~~Hover >5 seconds: idea drifts upward~~ (removed - conflicts with 3.5s auto-cycle)
 - [x] Idle 5 minutes: "Hello? You still there?"
-- [x] Cursed ideas: subtle screen shake
+- [x] Cursed ideas: subtle screen shake (20% chance)
 - **Status:** COMPLETE
 
 ### Task 4.2: Returning user features
