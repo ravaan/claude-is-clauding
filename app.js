@@ -461,38 +461,31 @@
         }
 
         case 'flip': {
-          // Low, subtle bass thud - like a soft page turn
+          // Elegant soft chime - like a gentle notification
           const osc = ctx.createOscillator();
           const gain = ctx.createGain();
           osc.type = 'sine';
           osc.connect(gain);
           gain.connect(ctx.destination);
-          // Very low frequency thud
-          osc.frequency.setValueAtTime(80, ctx.currentTime);
-          osc.frequency.exponentialRampToValueAtTime(40, ctx.currentTime + 0.15);
-          gain.gain.setValueAtTime(0.12, ctx.currentTime);
-          gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.2);
+          // Soft high tone that fades quickly
+          osc.frequency.setValueAtTime(800, ctx.currentTime);
+          osc.frequency.exponentialRampToValueAtTime(600, ctx.currentTime + 0.08);
+          gain.gain.setValueAtTime(0.03, ctx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.12);
           osc.start(ctx.currentTime);
-          osc.stop(ctx.currentTime + 0.25);
+          osc.stop(ctx.currentTime + 0.15);
 
-          // Add a soft click/air sound using noise
-          const bufferSize = ctx.sampleRate * 0.05;
-          const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
-          const data = buffer.getChannelData(0);
-          for (let i = 0; i < bufferSize; i++) {
-            data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (bufferSize * 0.1));
-          }
-          const noise = ctx.createBufferSource();
-          const noiseGain = ctx.createGain();
-          const filter = ctx.createBiquadFilter();
-          noise.buffer = buffer;
-          filter.type = 'lowpass';
-          filter.frequency.setValueAtTime(400, ctx.currentTime);
-          noise.connect(filter);
-          filter.connect(noiseGain);
-          noiseGain.connect(ctx.destination);
-          noiseGain.gain.setValueAtTime(0.03, ctx.currentTime);
-          noise.start(ctx.currentTime);
+          // Add subtle harmonic
+          const harm = ctx.createOscillator();
+          const harmGain = ctx.createGain();
+          harm.type = 'sine';
+          harm.connect(harmGain);
+          harmGain.connect(ctx.destination);
+          harm.frequency.setValueAtTime(1200, ctx.currentTime);
+          harmGain.gain.setValueAtTime(0.015, ctx.currentTime);
+          harmGain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.08);
+          harm.start(ctx.currentTime);
+          harm.stop(ctx.currentTime + 0.1);
           break;
         }
       }
@@ -715,9 +708,8 @@
 
     let animationFrame;
     function animate() {
-      // Fade effect instead of clear for trail
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
-      ctx.fillRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+      // Clear canvas properly
+      ctx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
 
       let stillActive = false;
       for (const s of sparkles) {
@@ -747,12 +739,12 @@
 
           // Glow effect
           ctx.save();
-          ctx.globalAlpha = displayAlpha * 0.3;
+          ctx.globalAlpha = displayAlpha * 0.4;
           ctx.fillStyle = s.color;
           ctx.shadowColor = s.color;
-          ctx.shadowBlur = 20;
+          ctx.shadowBlur = 25;
           ctx.beginPath();
-          ctx.arc(s.x, s.y, s.size * 2, 0, Math.PI * 2);
+          ctx.arc(s.x, s.y, s.size * 1.5, 0, Math.PI * 2);
           ctx.fill();
           ctx.restore();
 
@@ -764,8 +756,8 @@
 
           // Draw 4-point star
           ctx.beginPath();
-          for (let i = 0; i < 4; i++) {
-            const angle = (i * Math.PI) / 2;
+          for (let j = 0; j < 4; j++) {
+            const angle = (j * Math.PI) / 2;
             const outerRadius = s.size * (1 + 0.3 * Math.sin(s.twinkle * 2));
             const innerRadius = s.size * 0.3;
             ctx.lineTo(Math.cos(angle) * outerRadius, Math.sin(angle) * outerRadius);
@@ -776,9 +768,9 @@
 
           // Bright center
           ctx.fillStyle = '#ffffff';
-          ctx.globalAlpha = displayAlpha * 0.8;
+          ctx.globalAlpha = displayAlpha * 0.9;
           ctx.beginPath();
-          ctx.arc(0, 0, s.size * 0.3, 0, Math.PI * 2);
+          ctx.arc(0, 0, s.size * 0.4, 0, Math.PI * 2);
           ctx.fill();
 
           ctx.restore();
