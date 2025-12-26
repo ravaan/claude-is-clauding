@@ -586,7 +586,7 @@
   }
 
   function showHelpToast() {
-    showToast("Space/Enter: next | T: theme | S: sound | ?: help");
+    showToast("Space/Enter: next | T: theme | S: sound | type 'help' or '?'");
   }
 
   // ===== TRIPLE-CLICK HEADER =====

@@ -92,6 +92,8 @@ h1 {
   justify-content: center;
   transition: border-color var(--transition-speed), transform 0.2s;
   position: relative;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 #theme-toggle:hover,
