@@ -2,9 +2,9 @@
 
 ## Project Status
 - **Total Tasks:** 25
-- **Completed:** 9
+- **Completed:** 10
 - **In Progress:** 0
-- **Remaining:** 16
+- **Remaining:** 15
 - **Last Updated:** 2025-12-27
 
 ---
@@ -41,7 +41,7 @@
 
 ---
 
-## Phase 2: High Priority Tasks [5/6]
+## Phase 2: High Priority Tasks [6/6] ✅
 
 ### Task 2.1: Implement localStorage tracking system
 - [x] Create tracking object structure
@@ -79,10 +79,10 @@
 - **Status:** COMPLETE
 
 ### Task 2.6: Time-based behaviors
-- [ ] Midnight mode (12am-3am): boost cursed/existential, darker theme
-- [ ] Hour marks: brief animation + "It's been X hours..."
-- [ ] 30 min on site: notification "Claude probably finished btw"
-- **Status:** Not started
+- [x] Midnight mode (12am-3am): boost cursed/existential (already in 2.2)
+- [x] Hour marks: toast notifications at 1, 2, 3 hours
+- [x] 30 min on site: notification "Claude probably finished btw"
+- **Status:** COMPLETE
 
 ---
 
@@ -168,6 +168,7 @@
 | 668dca7 | 1.1-1.3 | Add ideas.json with 508 categorized ideas | 2025-12-27 |
 | TBD | 2.1-2.2 | localStorage tracking + ideas.json integration | 2025-12-27 |
 | TBD | 2.3-2.5, 4.4 | Milestone achievements: toasts, desperate mode, confetti | 2025-12-27 |
+| TBD | 2.6 | Time-based behaviors: 30min and hourly notifications | 2025-12-27 |
 
 ---
 

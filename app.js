@@ -42,6 +42,8 @@
   let intervalId = null;
   let isAnimating = false;
   let toastTimeout = null;
+  let timeCheckIntervalId = null;
+  let lastHourNotified = 0;
 
   // ===== STORAGE SYSTEM =====
   const defaultStorage = {
@@ -271,6 +273,52 @@
     return new Date().getDay() === 5;
   }
 
+  // ===== TIME-BASED BEHAVIORS =====
+  const TIME_MESSAGES = {
+    thirtyMin: "Claude probably finished btw",
+    hour1: "It's been an hour... maybe check on Claude?",
+    hour2: "Two hours! At this point, you're the one procrastinating",
+    hour3: "Three hours. This is a lifestyle now"
+  };
+
+  function checkTimeMilestones() {
+    const duration = getSessionDuration();
+    const minutes = Math.floor(duration / 60000);
+    const hours = Math.floor(minutes / 60);
+
+    // 30 minute notification (only once)
+    if (minutes >= 30 && !hasAchievement('time_30min')) {
+      unlockAchievement('time_30min');
+      showToast(TIME_MESSAGES.thirtyMin);
+    }
+
+    // Hour milestones
+    if (hours >= 1 && hours > lastHourNotified) {
+      lastHourNotified = hours;
+      if (hours === 1 && !hasAchievement('time_1hour')) {
+        unlockAchievement('time_1hour');
+        showToast(TIME_MESSAGES.hour1);
+      } else if (hours === 2 && !hasAchievement('time_2hours')) {
+        unlockAchievement('time_2hours');
+        showToast(TIME_MESSAGES.hour2);
+      } else if (hours === 3 && !hasAchievement('time_3hours')) {
+        unlockAchievement('time_3hours');
+        showToast(TIME_MESSAGES.hour3);
+      }
+    }
+  }
+
+  function startTimeCheck() {
+    // Check every minute
+    timeCheckIntervalId = setInterval(checkTimeMilestones, 60000);
+  }
+
+  function stopTimeCheck() {
+    if (timeCheckIntervalId) {
+      clearInterval(timeCheckIntervalId);
+    }
+  }
+
   // ===== IDEA SELECTION =====
   function filterIdeasByTime(ideasList) {
     const midnight = isMidnight();
@@ -465,6 +513,7 @@
 
     incrementIdeaCounter(firstIdea.id);
     resetTimer();
+    startTimeCheck();
 
     // Event listeners
     themeToggle.addEventListener('click', toggleTheme);
@@ -500,8 +549,12 @@
     document.addEventListener('visibilitychange', () => {
       if (document.hidden) {
         clearInterval(intervalId);
+        stopTimeCheck();
       } else {
         resetTimer();
+        startTimeCheck();
+        // Check immediately when returning
+        checkTimeMilestones();
       }
     });
   }
