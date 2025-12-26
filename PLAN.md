@@ -2,9 +2,9 @@
 
 ## Project Status
 - **Total Tasks:** 25
-- **Completed:** 10
+- **Completed:** 16
 - **In Progress:** 0
-- **Remaining:** 15
+- **Remaining:** 9
 - **Last Updated:** 2025-12-27
 
 ---
@@ -86,43 +86,44 @@
 
 ---
 
-## Phase 3: Medium Priority Tasks [0/6]
+## Phase 3: Medium Priority Tasks [6/6] ✅
 
 ### Task 3.1: Konami code easter egg
-- [ ] Detect ↑↑↓↓←→←→BA sequence
-- [ ] Retro mode: green terminal text
-- [ ] CRT scanlines effect
-- [ ] Persist preference in localStorage
-- **Status:** Not started
+- [x] Detect ↑↑↓↓←→←→BA sequence
+- [x] Retro mode: green terminal text
+- [x] CRT scanlines effect
+- [x] Persist preference in localStorage
+- **Status:** COMPLETE
 
 ### Task 3.2: Triple-click logo easter egg
-- [ ] Detect triple click on header
-- [ ] Cycle taglines: "Procrastination as a Service", etc.
-- **Status:** Not started
+- [x] Detect triple click on header
+- [x] Cycle taglines: "Procrastination as a Service", etc.
+- **Status:** COMPLETE
 
 ### Task 3.3: Type "help" easter egg
-- [ ] Detect "help" typed anywhere
-- [ ] Show minimal modal with meta-tips
-- **Status:** Not started
+- [x] Detect "help" typed anywhere
+- [x] Show toast with keyboard shortcuts
+- **Status:** COMPLETE
 
 ### Task 3.4: Click same idea 3 times
-- [ ] Track consecutive clicks on same idea
-- [ ] Show message: "Really? This one again? 🤔"
-- **Status:** Not started
+- [x] Track consecutive clicks on same idea
+- [x] Show message: "Really? This one again?"
+- **Status:** COMPLETE
 
 ### Task 3.5: Rare random events
-- [ ] ID #77: celebration sound + sparkles
-- [ ] ID #256: special programmer message
-- [ ] ID #13: unlucky theme
-- [ ] 0.1% chance: "ERROR: Idea generator is now self-aware 🤖"
-- **Status:** Not started
+- [x] ID #77: celebration sound + sparkles
+- [x] ID #256: special programmer message
+- [x] ID #13: unlucky sound + screen shake
+- [x] 0.1% chance: "ERROR: Idea generator is now self-aware"
+- **Status:** COMPLETE
 
 ### Task 3.6: Audio system
-- [ ] Research minimal audio approach (Web Audio API or small files)
-- [ ] Celebration sound for lucky events
-- [ ] Subtle sounds for achievements
-- [ ] Respect user preferences (muted option)
-- **Status:** Not started
+- [x] Web Audio API synthesized sounds (no files needed)
+- [x] Celebration sound for lucky events
+- [x] Retro beep for Konami code
+- [x] Unlucky descending tone
+- [x] Toggle with 'S' key, persisted in localStorage
+- **Status:** COMPLETE
 
 ---
 
@@ -169,6 +170,7 @@
 | TBD | 2.1-2.2 | localStorage tracking + ideas.json integration | 2025-12-27 |
 | TBD | 2.3-2.5, 4.4 | Milestone achievements: toasts, desperate mode, confetti | 2025-12-27 |
 | TBD | 2.6 | Time-based behaviors: 30min and hourly notifications | 2025-12-27 |
+| TBD | 3.1-3.6 | Easter eggs: Konami, triple-click, help, rare events, audio | 2025-12-27 |
 
 ---
 

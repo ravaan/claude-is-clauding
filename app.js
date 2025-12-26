@@ -44,6 +44,12 @@
   let toastTimeout = null;
   let timeCheckIntervalId = null;
   let lastHourNotified = 0;
+  let konamiIndex = 0;
+  let typedKeys = '';
+  let lastClickedIdeaId = null;
+  let consecutiveClicks = 0;
+  let audioContext = null;
+  let soundsEnabled = true;
 
   // ===== STORAGE SYSTEM =====
   const defaultStorage = {
@@ -56,7 +62,9 @@
     achievementsUnlocked: [],
     seenIdeaIds: [],
     desperateModeUnlocked: false,
-    desperateModeActive: false
+    desperateModeActive: false,
+    retroModeActive: false,
+    soundsEnabled: true
   };
 
   function getStorage() {
@@ -319,6 +327,300 @@
     }
   }
 
+  // ===== AUDIO SYSTEM =====
+  function initAudio() {
+    const storage = getStorage();
+    soundsEnabled = storage.soundsEnabled;
+  }
+
+  function getAudioContext() {
+    if (!audioContext) {
+      audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    return audioContext;
+  }
+
+  function playSound(type) {
+    if (!soundsEnabled) return;
+
+    try {
+      const ctx = getAudioContext();
+      const oscillator = ctx.createOscillator();
+      const gainNode = ctx.createGain();
+
+      oscillator.connect(gainNode);
+      gainNode.connect(ctx.destination);
+
+      // Different sounds for different events
+      switch (type) {
+        case 'celebration':
+          // Happy ascending arpeggio
+          oscillator.frequency.setValueAtTime(523.25, ctx.currentTime); // C5
+          oscillator.frequency.setValueAtTime(659.25, ctx.currentTime + 0.1); // E5
+          oscillator.frequency.setValueAtTime(783.99, ctx.currentTime + 0.2); // G5
+          oscillator.frequency.setValueAtTime(1046.50, ctx.currentTime + 0.3); // C6
+          gainNode.gain.setValueAtTime(0.1, ctx.currentTime);
+          gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5);
+          oscillator.start(ctx.currentTime);
+          oscillator.stop(ctx.currentTime + 0.5);
+          break;
+
+        case 'unlock':
+          // Short blip
+          oscillator.frequency.setValueAtTime(880, ctx.currentTime); // A5
+          oscillator.frequency.setValueAtTime(1100, ctx.currentTime + 0.05);
+          gainNode.gain.setValueAtTime(0.08, ctx.currentTime);
+          gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.15);
+          oscillator.start(ctx.currentTime);
+          oscillator.stop(ctx.currentTime + 0.15);
+          break;
+
+        case 'retro':
+          // 8-bit style beep
+          oscillator.type = 'square';
+          oscillator.frequency.setValueAtTime(440, ctx.currentTime);
+          oscillator.frequency.setValueAtTime(880, ctx.currentTime + 0.1);
+          oscillator.frequency.setValueAtTime(440, ctx.currentTime + 0.2);
+          gainNode.gain.setValueAtTime(0.05, ctx.currentTime);
+          gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
+          oscillator.start(ctx.currentTime);
+          oscillator.stop(ctx.currentTime + 0.3);
+          break;
+
+        case 'unlucky':
+          // Descending sad tone
+          oscillator.frequency.setValueAtTime(400, ctx.currentTime);
+          oscillator.frequency.exponentialRampToValueAtTime(200, ctx.currentTime + 0.3);
+          gainNode.gain.setValueAtTime(0.08, ctx.currentTime);
+          gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.4);
+          oscillator.start(ctx.currentTime);
+          oscillator.stop(ctx.currentTime + 0.4);
+          break;
+      }
+    } catch (e) {
+      // Audio not supported, fail silently
+    }
+  }
+
+  function toggleSound() {
+    soundsEnabled = !soundsEnabled;
+    const storage = getStorage();
+    storage.soundsEnabled = soundsEnabled;
+    setStorage(storage);
+    showToast(soundsEnabled ? "Sounds on" : "Sounds off");
+  }
+
+  // ===== KONAMI CODE EASTER EGG =====
+  const KONAMI_SEQUENCE = ['ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight', 'b', 'a'];
+
+  function checkKonamiCode(key) {
+    if (key === KONAMI_SEQUENCE[konamiIndex]) {
+      konamiIndex++;
+      if (konamiIndex === KONAMI_SEQUENCE.length) {
+        konamiIndex = 0;
+        activateRetroMode();
+      }
+    } else {
+      konamiIndex = 0;
+      // Check if the pressed key is the start of the sequence
+      if (key === KONAMI_SEQUENCE[0]) {
+        konamiIndex = 1;
+      }
+    }
+  }
+
+  function activateRetroMode() {
+    const storage = getStorage();
+    storage.retroModeActive = !storage.retroModeActive;
+    setStorage(storage);
+
+    if (storage.retroModeActive) {
+      document.body.classList.add('retro-mode');
+      playSound('retro');
+      showToast("RETRO MODE ACTIVATED");
+    } else {
+      document.body.classList.remove('retro-mode');
+      showToast("Retro mode deactivated");
+    }
+  }
+
+  function initRetroMode() {
+    const storage = getStorage();
+    if (storage.retroModeActive) {
+      document.body.classList.add('retro-mode');
+    }
+  }
+
+  // ===== TYPE "HELP" EASTER EGG =====
+  function checkTypedWord(key) {
+    // Only track letter keys
+    if (key.length === 1 && /[a-z]/i.test(key)) {
+      typedKeys += key.toLowerCase();
+      // Keep only last 10 characters
+      if (typedKeys.length > 10) {
+        typedKeys = typedKeys.slice(-10);
+      }
+
+      if (typedKeys.includes('help')) {
+        typedKeys = '';
+        showHelpModal();
+      }
+    }
+  }
+
+  function showHelpModal() {
+    showToast("Space/Enter: next idea | T: toggle theme | S: toggle sound");
+  }
+
+  // ===== TRIPLE-CLICK HEADER =====
+  const TAGLINES = [
+    "While Claude is clauding...",
+    "Procrastination as a Service",
+    "No AIs were harmed making this",
+    "Still loading... just like your project",
+    "Made while Claude worked",
+    "The waiting room of the future"
+  ];
+  let taglineIndex = 0;
+  let headerClickCount = 0;
+  let headerClickTimer = null;
+
+  function handleHeaderClick() {
+    headerClickCount++;
+
+    if (headerClickTimer) {
+      clearTimeout(headerClickTimer);
+    }
+
+    headerClickTimer = setTimeout(() => {
+      if (headerClickCount >= 3) {
+        cycleTagline();
+      }
+      headerClickCount = 0;
+    }, 400);
+  }
+
+  function cycleTagline() {
+    taglineIndex = (taglineIndex + 1) % TAGLINES.length;
+    const h1 = document.querySelector('h1');
+    if (h1) {
+      h1.textContent = TAGLINES[taglineIndex];
+    }
+  }
+
+  // ===== CLICK SAME IDEA 3 TIMES =====
+  function trackIdeaClick(ideaId) {
+    if (ideaId === lastClickedIdeaId) {
+      consecutiveClicks++;
+      if (consecutiveClicks === 3) {
+        showToast("Really? This one again?");
+        consecutiveClicks = 0;
+      }
+    } else {
+      lastClickedIdeaId = ideaId;
+      consecutiveClicks = 1;
+    }
+  }
+
+  // ===== RARE RANDOM EVENTS =====
+  const SPECIAL_IDEAS = {
+    77: { type: 'lucky', message: "Lucky #77!", sound: 'celebration' },
+    256: { type: 'programmer', message: "0x100 - You found the programmer's number!" },
+    13: { type: 'unlucky', message: "Unlucky #13...", sound: 'unlucky' }
+  };
+
+  function checkSpecialIdea(idea) {
+    const special = SPECIAL_IDEAS[idea.id];
+    if (special) {
+      if (special.sound) {
+        playSound(special.sound);
+      }
+      if (special.type === 'lucky') {
+        triggerSparkles();
+      }
+      if (special.type === 'unlucky') {
+        triggerScreenShake();
+      }
+      showToast(special.message);
+      return true;
+    }
+
+    // 0.1% chance of self-aware message
+    if (Math.random() < 0.001) {
+      showToast("ERROR: Idea generator is now self-aware");
+      return true;
+    }
+
+    return false;
+  }
+
+  function triggerSparkles() {
+    const ctx = confettiCanvas.getContext('2d');
+    confettiCanvas.width = window.innerWidth;
+    confettiCanvas.height = window.innerHeight;
+
+    const sparkles = [];
+
+    // Create sparkles around center
+    for (let i = 0; i < 30; i++) {
+      const angle = (Math.PI * 2 * i) / 30;
+      sparkles.push({
+        x: confettiCanvas.width / 2,
+        y: confettiCanvas.height / 2,
+        vx: Math.cos(angle) * (2 + Math.random() * 3),
+        vy: Math.sin(angle) * (2 + Math.random() * 3),
+        size: Math.random() * 4 + 2,
+        alpha: 1,
+        decay: 0.02 + Math.random() * 0.02
+      });
+    }
+
+    let animationFrame;
+    function animate() {
+      ctx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+
+      let stillActive = false;
+      for (const s of sparkles) {
+        s.x += s.vx;
+        s.y += s.vy;
+        s.alpha -= s.decay;
+
+        if (s.alpha > 0) {
+          stillActive = true;
+          ctx.save();
+          ctx.globalAlpha = s.alpha;
+          ctx.fillStyle = '#ffd700';
+          ctx.beginPath();
+          ctx.arc(s.x, s.y, s.size, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+        }
+      }
+
+      if (stillActive) {
+        animationFrame = requestAnimationFrame(animate);
+      } else {
+        ctx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+      }
+    }
+
+    animate();
+
+    setTimeout(() => {
+      if (animationFrame) {
+        cancelAnimationFrame(animationFrame);
+      }
+      ctx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+    }, 2000);
+  }
+
+  function triggerScreenShake() {
+    document.body.classList.add('screen-shake');
+    setTimeout(() => {
+      document.body.classList.remove('screen-shake');
+    }, 500);
+  }
+
   // ===== IDEA SELECTION =====
   function filterIdeasByTime(ideasList) {
     const midnight = isMidnight();
@@ -434,6 +736,8 @@
 
       const storage = incrementIdeaCounter(nextIdea.id);
       checkAchievements(storage);
+      checkSpecialIdea(nextIdea);
+      trackIdeaClick(nextIdea.id);
     }, ANIMATION_DURATION);
   }
 
@@ -514,11 +818,19 @@
     incrementIdeaCounter(firstIdea.id);
     resetTimer();
     startTimeCheck();
+    initAudio();
+    initRetroMode();
 
     // Event listeners
     themeToggle.addEventListener('click', toggleTheme);
     desperateModeBtn.addEventListener('click', toggleDesperateMode);
     achievementDismiss.addEventListener('click', hideAchievementPopup);
+
+    // Triple-click header easter egg
+    const header = document.querySelector('h1');
+    if (header) {
+      header.addEventListener('click', handleHeaderClick);
+    }
 
     // Close achievement on overlay click
     achievementOverlay.addEventListener('click', (e) => {
@@ -535,6 +847,12 @@
         return;
       }
 
+      // Check for Konami code
+      checkKonamiCode(e.key);
+
+      // Check for typed words (like "help")
+      checkTypedWord(e.key);
+
       if (e.key === ' ' || e.key === 'ArrowRight' || e.key === 'Enter') {
         e.preventDefault();
         showNextIdea();
@@ -542,6 +860,9 @@
       }
       if (e.key === 't' || e.key === 'T') {
         toggleTheme();
+      }
+      if (e.key === 's' || e.key === 'S') {
+        toggleSound();
       }
     });
 
