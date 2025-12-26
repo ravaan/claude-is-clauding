@@ -181,80 +181,89 @@
 
   // ===== CONFETTI =====
   function triggerConfetti() {
-    const ctx = confettiCanvas.getContext('2d');
-    confettiCanvas.width = window.innerWidth;
-    confettiCanvas.height = window.innerHeight;
+    const canvas = confettiCanvas;
+    const ctx = canvas.getContext('2d');
+
+    // Set canvas size
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    // Make canvas visible
+    canvas.style.display = 'block';
 
     const particles = [];
     const colors = ['#fafafa', '#888', '#666', '#aaa', '#fff', '#ccc'];
+    const totalParticles = 150;
 
-    // Create more particles, spread out over time
-    function addWave(count, delay) {
-      setTimeout(() => {
-        for (let i = 0; i < count; i++) {
-          particles.push({
-            x: Math.random() * confettiCanvas.width,
-            y: -10 - Math.random() * 50,
-            vx: (Math.random() - 0.5) * 3,
-            vy: Math.random() * 1.5 + 0.5, // slower fall
-            size: Math.random() * 8 + 3,
-            color: colors[Math.floor(Math.random() * colors.length)],
-            rotation: Math.random() * 360,
-            rotationSpeed: (Math.random() - 0.5) * 8,
-            wobble: Math.random() * Math.PI * 2,
-            wobbleSpeed: 0.05 + Math.random() * 0.05
-          });
-        }
-      }, delay);
+    // Create all particles immediately
+    for (let i = 0; i < totalParticles; i++) {
+      particles.push({
+        x: Math.random() * canvas.width,
+        y: -20 - Math.random() * 200, // Spread start positions
+        vx: (Math.random() - 0.5) * 4,
+        vy: Math.random() * 2 + 1,
+        size: Math.random() * 10 + 4,
+        color: colors[Math.floor(Math.random() * colors.length)],
+        rotation: Math.random() * 360,
+        rotationSpeed: (Math.random() - 0.5) * 10,
+        wobble: Math.random() * Math.PI * 2,
+        wobbleSpeed: 0.03 + Math.random() * 0.03
+      });
     }
 
-    // Multiple waves of confetti
-    addWave(80, 0);
-    addWave(60, 500);
-    addWave(50, 1000);
-    addWave(40, 1500);
-    addWave(30, 2000);
-
     let animationFrame;
-    function animate() {
-      ctx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+    let startTime = Date.now();
+    const duration = 8000; // 8 seconds
 
-      let stillActive = false;
+    function animate() {
+      const elapsed = Date.now() - startTime;
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      let stillVisible = false;
+
       for (const p of particles) {
-        // Wobble side to side like real confetti
+        // Wobble side to side
         p.wobble += p.wobbleSpeed;
-        p.x += p.vx + Math.sin(p.wobble) * 0.5;
+        p.x += p.vx + Math.sin(p.wobble) * 1.5;
         p.y += p.vy;
-        p.vy += 0.03; // gentler gravity
+        p.vy += 0.05; // gravity
         p.rotation += p.rotationSpeed;
 
-        if (p.y < confettiCanvas.height + 20) {
-          stillActive = true;
+        // Check if still on screen
+        if (p.y < canvas.height + 50) {
+          stillVisible = true;
+
           ctx.save();
           ctx.translate(p.x, p.y);
           ctx.rotate(p.rotation * Math.PI / 180);
           ctx.fillStyle = p.color;
-          ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * 0.6); // rectangular confetti
+          // Draw rectangle confetti
+          ctx.fillRect(-p.size / 2, -p.size / 4, p.size, p.size / 2);
           ctx.restore();
         }
       }
 
-      if (stillActive) {
+      if (stillVisible && elapsed < duration) {
         animationFrame = requestAnimationFrame(animate);
       } else {
-        ctx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+        // Clean up
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        canvas.style.display = '';
       }
     }
 
-    animate();
+    // Start animation
+    animationFrame = requestAnimationFrame(animate);
 
-    // Clean up after 10 seconds max
+    // Safety cleanup
     setTimeout(() => {
       if (animationFrame) {
         cancelAnimationFrame(animationFrame);
       }
-      ctx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
-    }, 10000);
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      canvas.style.display = '';
+    }, duration + 1000);
   }
 
   // ===== DESPERATE MODE =====
@@ -461,31 +470,39 @@
         }
 
         case 'flip': {
-          // Elegant soft chime - like a gentle notification
-          const osc = ctx.createOscillator();
-          const gain = ctx.createGain();
-          osc.type = 'sine';
-          osc.connect(gain);
-          gain.connect(ctx.destination);
-          // Soft high tone that fades quickly
-          osc.frequency.setValueAtTime(800, ctx.currentTime);
-          osc.frequency.exponentialRampToValueAtTime(600, ctx.currentTime + 0.08);
-          gain.gain.setValueAtTime(0.03, ctx.currentTime);
-          gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.12);
-          osc.start(ctx.currentTime);
-          osc.stop(ctx.currentTime + 0.15);
+          // Soft page turn sound - gentle filtered noise whoosh
+          const bufferSize = ctx.sampleRate * 0.15; // 150ms
+          const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+          const data = buffer.getChannelData(0);
 
-          // Add subtle harmonic
-          const harm = ctx.createOscillator();
-          const harmGain = ctx.createGain();
-          harm.type = 'sine';
-          harm.connect(harmGain);
-          harmGain.connect(ctx.destination);
-          harm.frequency.setValueAtTime(1200, ctx.currentTime);
-          harmGain.gain.setValueAtTime(0.015, ctx.currentTime);
-          harmGain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.08);
-          harm.start(ctx.currentTime);
-          harm.stop(ctx.currentTime + 0.1);
+          // Create soft noise that fades
+          for (let i = 0; i < bufferSize; i++) {
+            const t = i / bufferSize;
+            // Envelope: quick attack, smooth decay
+            const envelope = Math.sin(t * Math.PI) * Math.exp(-t * 3);
+            data[i] = (Math.random() * 2 - 1) * envelope;
+          }
+
+          const noise = ctx.createBufferSource();
+          noise.buffer = buffer;
+
+          // Low-pass filter for soft, muffled sound
+          const filter = ctx.createBiquadFilter();
+          filter.type = 'lowpass';
+          filter.frequency.setValueAtTime(800, ctx.currentTime);
+          filter.frequency.exponentialRampToValueAtTime(300, ctx.currentTime + 0.1);
+          filter.Q.setValueAtTime(1, ctx.currentTime);
+
+          // Very subtle gain
+          const gain = ctx.createGain();
+          gain.gain.setValueAtTime(0.08, ctx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.15);
+
+          noise.connect(filter);
+          filter.connect(gain);
+          gain.connect(ctx.destination);
+
+          noise.start(ctx.currentTime);
           break;
         }
       }
@@ -647,151 +664,151 @@
   }
 
   function triggerSparkles() {
-    const ctx = confettiCanvas.getContext('2d');
-    confettiCanvas.width = window.innerWidth;
-    confettiCanvas.height = window.innerHeight;
+    const canvas = confettiCanvas;
+    const ctx = canvas.getContext('2d');
+
+    // Set canvas size
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    // Make canvas visible
+    canvas.style.display = 'block';
 
     const sparkles = [];
     const colors = ['#ffd700', '#ffec8b', '#fff8dc', '#fffacd', '#ffffff'];
+    const cx = canvas.width / 2;
+    const cy = canvas.height / 2;
 
-    // Create multiple bursts of sparkles
-    function addBurst(centerX, centerY, count, delay) {
-      setTimeout(() => {
-        for (let i = 0; i < count; i++) {
-          const angle = (Math.PI * 2 * i) / count + Math.random() * 0.5;
-          const speed = 1.5 + Math.random() * 4;
-          sparkles.push({
-            x: centerX,
-            y: centerY,
-            vx: Math.cos(angle) * speed,
-            vy: Math.sin(angle) * speed,
-            size: Math.random() * 5 + 2,
-            maxSize: Math.random() * 8 + 4,
-            alpha: 1,
-            decay: 0.008 + Math.random() * 0.008,
-            color: colors[Math.floor(Math.random() * colors.length)],
-            twinkle: Math.random() * Math.PI * 2,
-            twinkleSpeed: 0.2 + Math.random() * 0.3,
-            trail: []
-          });
-        }
-      }, delay);
+    // Create burst sparkles from center immediately
+    for (let i = 0; i < 60; i++) {
+      const angle = (Math.PI * 2 * i) / 60 + (Math.random() - 0.5) * 0.3;
+      const speed = 2 + Math.random() * 6;
+      sparkles.push({
+        x: cx,
+        y: cy,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed,
+        size: Math.random() * 6 + 3,
+        alpha: 1,
+        decay: 0.012 + Math.random() * 0.008,
+        color: colors[Math.floor(Math.random() * colors.length)],
+        twinkle: Math.random() * Math.PI * 2,
+        twinkleSpeed: 0.15 + Math.random() * 0.15,
+        type: 'burst'
+      });
     }
 
-    // Multiple bursts from center
-    const cx = confettiCanvas.width / 2;
-    const cy = confettiCanvas.height / 2;
-    addBurst(cx, cy, 40, 0);
-    addBurst(cx, cy, 30, 150);
-    addBurst(cx, cy, 20, 300);
-
-    // Random sparkles across screen
-    for (let i = 0; i < 50; i++) {
-      setTimeout(() => {
-        sparkles.push({
-          x: Math.random() * confettiCanvas.width,
-          y: Math.random() * confettiCanvas.height,
-          vx: 0,
-          vy: 0,
-          size: 0,
-          maxSize: Math.random() * 6 + 3,
-          alpha: 0,
-          fadeIn: true,
-          decay: 0.015,
-          color: colors[Math.floor(Math.random() * colors.length)],
-          twinkle: Math.random() * Math.PI * 2,
-          twinkleSpeed: 0.3 + Math.random() * 0.2,
-          trail: []
-        });
-      }, Math.random() * 1500);
+    // Create random twinkling sparkles across screen
+    for (let i = 0; i < 40; i++) {
+      sparkles.push({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        vx: 0,
+        vy: 0,
+        size: Math.random() * 5 + 2,
+        alpha: Math.random(), // Start at random alpha
+        decay: 0.02 + Math.random() * 0.01,
+        color: colors[Math.floor(Math.random() * colors.length)],
+        twinkle: Math.random() * Math.PI * 2,
+        twinkleSpeed: 0.2 + Math.random() * 0.2,
+        type: 'static',
+        delay: Math.random() * 500 // Stagger appearance
+      });
     }
 
     let animationFrame;
+    let startTime = Date.now();
+    const duration = 3000;
+
     function animate() {
-      // Clear canvas properly
-      ctx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+      const elapsed = Date.now() - startTime;
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
 
       let stillActive = false;
-      for (const s of sparkles) {
-        s.x += s.vx;
-        s.y += s.vy;
-        s.vx *= 0.98; // slow down
-        s.vy *= 0.98;
-        s.twinkle += s.twinkleSpeed;
 
-        // Fade in then out
-        if (s.fadeIn) {
-          s.alpha += 0.05;
-          s.size = Math.min(s.size + 0.5, s.maxSize);
-          if (s.alpha >= 1) {
-            s.fadeIn = false;
-          }
-        } else {
-          s.alpha -= s.decay;
+      for (const s of sparkles) {
+        // Skip if delayed
+        if (s.delay && elapsed < s.delay) {
+          stillActive = true;
+          continue;
         }
 
-        // Twinkle effect
-        const twinkleFactor = 0.5 + 0.5 * Math.sin(s.twinkle);
-        const displayAlpha = s.alpha * twinkleFactor;
+        // Update position for burst sparkles
+        if (s.type === 'burst') {
+          s.x += s.vx;
+          s.y += s.vy;
+          s.vx *= 0.96;
+          s.vy *= 0.96;
+        }
+
+        s.twinkle += s.twinkleSpeed;
+        s.alpha -= s.decay;
 
         if (s.alpha > 0) {
           stillActive = true;
 
-          // Glow effect
+          // Twinkle effect
+          const twinkleFactor = 0.6 + 0.4 * Math.sin(s.twinkle);
+          const displayAlpha = Math.max(0, s.alpha * twinkleFactor);
+
+          // Outer glow
           ctx.save();
-          ctx.globalAlpha = displayAlpha * 0.4;
+          ctx.globalAlpha = displayAlpha * 0.5;
           ctx.fillStyle = s.color;
           ctx.shadowColor = s.color;
-          ctx.shadowBlur = 25;
+          ctx.shadowBlur = 15;
           ctx.beginPath();
-          ctx.arc(s.x, s.y, s.size * 1.5, 0, Math.PI * 2);
+          ctx.arc(s.x, s.y, s.size * 2, 0, Math.PI * 2);
           ctx.fill();
           ctx.restore();
 
-          // Core sparkle (4-point star)
+          // Draw 4-point star
           ctx.save();
           ctx.globalAlpha = displayAlpha;
           ctx.fillStyle = s.color;
           ctx.translate(s.x, s.y);
 
-          // Draw 4-point star
+          const starSize = s.size * (1 + 0.2 * Math.sin(s.twinkle * 2));
           ctx.beginPath();
           for (let j = 0; j < 4; j++) {
             const angle = (j * Math.PI) / 2;
-            const outerRadius = s.size * (1 + 0.3 * Math.sin(s.twinkle * 2));
-            const innerRadius = s.size * 0.3;
-            ctx.lineTo(Math.cos(angle) * outerRadius, Math.sin(angle) * outerRadius);
-            ctx.lineTo(Math.cos(angle + Math.PI / 4) * innerRadius, Math.sin(angle + Math.PI / 4) * innerRadius);
+            ctx.lineTo(Math.cos(angle) * starSize, Math.sin(angle) * starSize);
+            ctx.lineTo(Math.cos(angle + Math.PI / 4) * starSize * 0.4, Math.sin(angle + Math.PI / 4) * starSize * 0.4);
           }
           ctx.closePath();
           ctx.fill();
 
-          // Bright center
+          // Bright white center
           ctx.fillStyle = '#ffffff';
-          ctx.globalAlpha = displayAlpha * 0.9;
+          ctx.globalAlpha = displayAlpha;
           ctx.beginPath();
-          ctx.arc(0, 0, s.size * 0.4, 0, Math.PI * 2);
+          ctx.arc(0, 0, s.size * 0.3, 0, Math.PI * 2);
           ctx.fill();
 
           ctx.restore();
         }
       }
 
-      if (stillActive) {
+      if (stillActive && elapsed < duration) {
         animationFrame = requestAnimationFrame(animate);
       } else {
-        ctx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        canvas.style.display = '';
       }
     }
 
-    animate();
+    // Start animation
+    animationFrame = requestAnimationFrame(animate);
 
+    // Safety cleanup
     setTimeout(() => {
       if (animationFrame) {
         cancelAnimationFrame(animationFrame);
       }
-      ctx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
-    }, 4000);
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      canvas.style.display = '';
+    }, duration + 500);
   }
 
   function triggerScreenShake() {
