@@ -5,6 +5,7 @@
   const ANIMATION_DURATION = 800;
   const CYCLE_INTERVAL = 3500;
   const STORAGE_KEY = 'claudeIsClauding';
+  const TOAST_DURATION = 3000;
 
   // Rarity weights (higher = more likely)
   const RARITY_WEIGHTS = {
@@ -15,15 +16,32 @@
     lucky: 0.5
   };
 
+  // Achievement milestones
+  const MILESTONES = {
+    ideas10: { count: 10, id: 'ideas_10', message: "Still waiting? Claude must be building something epic" },
+    ideas50: { count: 50, id: 'ideas_50', message: "Desperate mode unlocked" },
+    ideas100: { count: 100, id: 'ideas_100', badge: "🏆", title: "Terminal Velocity", message: "100 ideas! Maybe check if Claude finished 30 minutes ago..." },
+    ideas420: { count: 420, id: 'ideas_420', message: "Okay you're just procrastinating now" }
+  };
+
   // ===== DOM ELEMENTS =====
   const themeToggle = document.getElementById('theme-toggle');
   const slotWindow = document.querySelector('.slot-window');
+  const toastEl = document.getElementById('toast');
+  const desperateModeBtn = document.getElementById('desperate-mode');
+  const achievementOverlay = document.getElementById('achievement-overlay');
+  const achievementBadge = document.getElementById('achievement-badge');
+  const achievementTitle = document.getElementById('achievement-title');
+  const achievementMessage = document.getElementById('achievement-message');
+  const achievementDismiss = document.getElementById('achievement-dismiss');
+  const confettiCanvas = document.getElementById('confetti-canvas');
 
   // ===== STATE =====
   let ideas = [];
   let currentIdea = null;
   let intervalId = null;
   let isAnimating = false;
+  let toastTimeout = null;
 
   // ===== STORAGE SYSTEM =====
   const defaultStorage = {
@@ -75,6 +93,10 @@
     storage.sessionStartTime = Date.now();
 
     setStorage(storage);
+
+    // Update UI based on storage
+    updateDesperateModeUI(storage);
+
     return storage;
   }
 
@@ -108,9 +130,135 @@
     if (!storage.achievementsUnlocked.includes(achievementId)) {
       storage.achievementsUnlocked.push(achievementId);
       setStorage(storage);
-      return true; // New achievement
+      return true;
     }
-    return false; // Already unlocked
+    return false;
+  }
+
+  function hasAchievement(achievementId) {
+    const storage = getStorage();
+    return storage.achievementsUnlocked.includes(achievementId);
+  }
+
+  // ===== TOAST SYSTEM =====
+  function showToast(message) {
+    if (toastTimeout) {
+      clearTimeout(toastTimeout);
+    }
+
+    toastEl.textContent = message;
+    toastEl.classList.add('show');
+
+    toastTimeout = setTimeout(() => {
+      toastEl.classList.remove('show');
+    }, TOAST_DURATION);
+  }
+
+  // ===== ACHIEVEMENT POPUP =====
+  function showAchievementPopup(badge, title, message) {
+    achievementBadge.textContent = badge;
+    achievementTitle.textContent = title;
+    achievementMessage.textContent = message;
+    achievementOverlay.classList.add('show');
+
+    // Trigger confetti
+    triggerConfetti();
+  }
+
+  function hideAchievementPopup() {
+    achievementOverlay.classList.remove('show');
+  }
+
+  // ===== CONFETTI =====
+  function triggerConfetti() {
+    const ctx = confettiCanvas.getContext('2d');
+    confettiCanvas.width = window.innerWidth;
+    confettiCanvas.height = window.innerHeight;
+
+    const particles = [];
+    const colors = ['#fafafa', '#888', '#666', '#aaa'];
+
+    // Create particles
+    for (let i = 0; i < 100; i++) {
+      particles.push({
+        x: Math.random() * confettiCanvas.width,
+        y: -10 - Math.random() * 100,
+        vx: (Math.random() - 0.5) * 4,
+        vy: Math.random() * 3 + 2,
+        size: Math.random() * 6 + 2,
+        color: colors[Math.floor(Math.random() * colors.length)],
+        rotation: Math.random() * 360,
+        rotationSpeed: (Math.random() - 0.5) * 10
+      });
+    }
+
+    let animationFrame;
+    function animate() {
+      ctx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+
+      let stillActive = false;
+      for (const p of particles) {
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vy += 0.1; // gravity
+        p.rotation += p.rotationSpeed;
+
+        if (p.y < confettiCanvas.height + 20) {
+          stillActive = true;
+          ctx.save();
+          ctx.translate(p.x, p.y);
+          ctx.rotate(p.rotation * Math.PI / 180);
+          ctx.fillStyle = p.color;
+          ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size);
+          ctx.restore();
+        }
+      }
+
+      if (stillActive) {
+        animationFrame = requestAnimationFrame(animate);
+      } else {
+        ctx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+      }
+    }
+
+    animate();
+
+    // Clean up after 5 seconds max
+    setTimeout(() => {
+      if (animationFrame) {
+        cancelAnimationFrame(animationFrame);
+      }
+      ctx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+    }, 5000);
+  }
+
+  // ===== DESPERATE MODE =====
+  function updateDesperateModeUI(storage) {
+    if (storage.desperateModeUnlocked) {
+      desperateModeBtn.classList.add('unlocked');
+    }
+    if (storage.desperateModeActive) {
+      desperateModeBtn.classList.add('active');
+      desperateModeBtn.textContent = 'desperate mode (on)';
+    } else {
+      desperateModeBtn.classList.remove('active');
+      desperateModeBtn.textContent = 'desperate mode';
+    }
+  }
+
+  function toggleDesperateMode() {
+    const storage = getStorage();
+    if (!storage.desperateModeUnlocked) return;
+
+    storage.desperateModeActive = !storage.desperateModeActive;
+    setStorage(storage);
+    updateDesperateModeUI(storage);
+
+    if (storage.desperateModeActive) {
+      showToast("Entering the void...");
+    } else {
+      showToast("Back to normal");
+    }
   }
 
   // ===== TIME HELPERS =====
@@ -142,7 +290,6 @@
   }
 
   function getWeightedRandomIdea(ideasList) {
-    // Calculate total weight
     let totalWeight = 0;
     const weightedIdeas = ideasList.map(idea => {
       const weight = RARITY_WEIGHTS[idea.rarity] || RARITY_WEIGHTS.common;
@@ -150,14 +297,12 @@
       return { idea, weight };
     });
 
-    // Pick random
     let random = Math.random() * totalWeight;
     for (const { idea, weight } of weightedIdeas) {
       random -= weight;
       if (random <= 0) return idea;
     }
 
-    // Fallback
     return ideasList[Math.floor(Math.random() * ideasList.length)];
   }
 
@@ -174,9 +319,16 @@
     if (isMidnight() && !storage.desperateModeActive) {
       const boostedCategories = ['cursed', 'existential'];
       const boostedIdeas = availableIdeas.filter(i => boostedCategories.includes(i.category));
-      // 40% chance to pick from boosted categories
       if (boostedIdeas.length > 0 && Math.random() < 0.4) {
         availableIdeas = boostedIdeas;
+      }
+    }
+
+    // After 420 ideas, boost meta category
+    if (storage.totalIdeasSeen >= 420) {
+      const metaIdeas = availableIdeas.filter(i => i.category === 'meta');
+      if (metaIdeas.length > 0 && Math.random() < 0.3) {
+        availableIdeas = metaIdeas;
       }
     }
 
@@ -213,17 +365,14 @@
     const nextIdea = selectNextIdea();
     const currentEl = slotWindow.querySelector('.idea.current');
 
-    // Create the incoming idea
     const enteringEl = createIdeaElement(nextIdea, 'entering');
     slotWindow.appendChild(enteringEl);
 
-    // Mark current as leaving
     if (currentEl) {
       currentEl.classList.remove('current');
       currentEl.classList.add('leaving');
     }
 
-    // After animation completes
     setTimeout(() => {
       if (currentEl) {
         currentEl.remove();
@@ -235,17 +384,46 @@
       currentIdea = nextIdea;
       isAnimating = false;
 
-      // Track this idea
       const storage = incrementIdeaCounter(nextIdea.id);
-
-      // Check achievements after showing idea
       checkAchievements(storage);
     }, ANIMATION_DURATION);
   }
 
   // ===== ACHIEVEMENTS =====
   function checkAchievements(storage) {
-    // Will be implemented in Task 2.3-2.5
+    const count = storage.sessionIdeasSeen;
+
+    // 10 ideas - toast
+    if (count === MILESTONES.ideas10.count && !hasAchievement(MILESTONES.ideas10.id)) {
+      unlockAchievement(MILESTONES.ideas10.id);
+      showToast(MILESTONES.ideas10.message);
+    }
+
+    // 50 ideas - unlock desperate mode
+    if (count === MILESTONES.ideas50.count && !hasAchievement(MILESTONES.ideas50.id)) {
+      unlockAchievement(MILESTONES.ideas50.id);
+      const updatedStorage = getStorage();
+      updatedStorage.desperateModeUnlocked = true;
+      setStorage(updatedStorage);
+      updateDesperateModeUI(updatedStorage);
+      showToast(MILESTONES.ideas50.message);
+    }
+
+    // 100 ideas - achievement popup with confetti
+    if (count === MILESTONES.ideas100.count && !hasAchievement(MILESTONES.ideas100.id)) {
+      unlockAchievement(MILESTONES.ideas100.id);
+      showAchievementPopup(
+        MILESTONES.ideas100.badge,
+        MILESTONES.ideas100.title,
+        MILESTONES.ideas100.message
+      );
+    }
+
+    // 420 ideas - toast
+    if (count === MILESTONES.ideas420.count && !hasAchievement(MILESTONES.ideas420.id)) {
+      unlockAchievement(MILESTONES.ideas420.id);
+      showToast(MILESTONES.ideas420.message);
+    }
   }
 
   // ===== TIMER =====
@@ -263,14 +441,12 @@
       return true;
     } catch (e) {
       console.error('Failed to load ideas:', e);
-      // Fallback to empty array
       ideas = [];
       return false;
     }
   }
 
   async function init() {
-    // Load ideas from JSON
     await loadIdeas();
 
     if (ideas.length === 0) {
@@ -278,8 +454,7 @@
       return;
     }
 
-    // Initialize session tracking
-    initSession();
+    const storage = initSession();
 
     // Show first idea
     slotWindow.innerHTML = '';
@@ -288,17 +463,29 @@
     const firstEl = createIdeaElement(firstIdea, 'current');
     slotWindow.appendChild(firstEl);
 
-    // Track first idea
     incrementIdeaCounter(firstIdea.id);
-
-    // Start auto-cycling
     resetTimer();
 
     // Event listeners
     themeToggle.addEventListener('click', toggleTheme);
+    desperateModeBtn.addEventListener('click', toggleDesperateMode);
+    achievementDismiss.addEventListener('click', hideAchievementPopup);
+
+    // Close achievement on overlay click
+    achievementOverlay.addEventListener('click', (e) => {
+      if (e.target === achievementOverlay) {
+        hideAchievementPopup();
+      }
+    });
 
     // Keyboard support
     document.addEventListener('keydown', (e) => {
+      // Close achievement popup on escape
+      if (e.key === 'Escape') {
+        hideAchievementPopup();
+        return;
+      }
+
       if (e.key === ' ' || e.key === 'ArrowRight' || e.key === 'Enter') {
         e.preventDefault();
         showNextIdea();
@@ -330,6 +517,8 @@
   window.__claudeIsClauding = {
     getStorage,
     getSessionDuration,
-    isReturningUser
+    isReturningUser,
+    showToast,
+    triggerConfetti
   };
 })();

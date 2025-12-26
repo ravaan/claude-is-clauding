@@ -2,9 +2,9 @@
 
 ## Project Status
 - **Total Tasks:** 25
-- **Completed:** 5
+- **Completed:** 9
 - **In Progress:** 0
-- **Remaining:** 20
+- **Remaining:** 16
 - **Last Updated:** 2025-12-27
 
 ---
@@ -41,7 +41,7 @@
 
 ---
 
-## Phase 2: High Priority Tasks [2/6]
+## Phase 2: High Priority Tasks [5/6]
 
 ### Task 2.1: Implement localStorage tracking system
 - [x] Create tracking object structure
@@ -62,21 +62,21 @@
 - **Status:** COMPLETE
 
 ### Task 2.3: Milestone achievements - 10 ideas
-- [ ] Toast notification: "Still waiting? Wow, Claude must be building something epic 🚀"
-- [ ] Minimal toast design matching site aesthetic
-- **Status:** Not started
+- [x] Toast notification: "Still waiting? Claude must be building something epic"
+- [x] Minimal toast design matching site aesthetic
+- **Status:** COMPLETE
 
 ### Task 2.4: Milestone achievements - 50 ideas
-- [ ] Unlock "Desperate Mode" text button in footer
-- [ ] Desperate mode shows only "cursed" category
-- [ ] Toggle on/off functionality
-- **Status:** Not started
+- [x] Unlock "Desperate Mode" text button in footer
+- [x] Desperate mode shows only "cursed" category
+- [x] Toggle on/off functionality
+- **Status:** COMPLETE
 
 ### Task 2.5: Milestone achievements - 100 ideas
-- [ ] Achievement popup with confetti (minimal style)
-- [ ] Badge: "🏆 Terminal Velocity"
-- [ ] Message about checking if Claude finished
-- **Status:** Not started
+- [x] Achievement popup with confetti (minimal style)
+- [x] Badge: "🏆 Terminal Velocity"
+- [x] Message about checking if Claude finished
+- **Status:** COMPLETE
 
 ### Task 2.6: Time-based behaviors
 - [ ] Midnight mode (12am-3am): boost cursed/existential, darker theme
@@ -126,7 +126,7 @@
 
 ---
 
-## Phase 4: Low Priority Tasks [0/5]
+## Phase 4: Low Priority Tasks [1/5]
 
 ### Task 4.1: Visual quirks
 - [ ] Hover >5 seconds: idea drifts upward
@@ -148,9 +148,9 @@
 - **Status:** Not started
 
 ### Task 4.4: Milestone - 420 ideas
-- [ ] Toast: "Okay you're just procrastinating now 😅"
-- [ ] Increase meta category probability
-- **Status:** Not started
+- [x] Toast: "Okay you're just procrastinating now"
+- [x] Increase meta category probability
+- **Status:** COMPLETE
 
 ### Task 4.5: Polish and testing
 - [ ] Test all easter eggs
@@ -167,6 +167,7 @@
 |--------|------|-------------|------|
 | 668dca7 | 1.1-1.3 | Add ideas.json with 508 categorized ideas | 2025-12-27 |
 | TBD | 2.1-2.2 | localStorage tracking + ideas.json integration | 2025-12-27 |
+| TBD | 2.3-2.5, 4.4 | Milestone achievements: toasts, desperate mode, confetti | 2025-12-27 |
 
 ---
 

@@ -197,14 +197,146 @@ main {
 /* Footer */
 footer {
   display: flex;
-  justify-content: center;
+  flex-direction: column;
   align-items: center;
+  gap: 0.75rem;
   padding-top: 2rem;
 }
 
 .made-with-love {
   font-size: 0.75rem;
   color: var(--text-muted);
+}
+
+/* Desperate Mode Button */
+.desperate-mode {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  background: none;
+  border: none;
+  cursor: pointer;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s, color 0.3s;
+  font-family: 'Space Mono', monospace;
+}
+
+.desperate-mode.unlocked {
+  opacity: 0.6;
+  pointer-events: auto;
+}
+
+.desperate-mode.unlocked:hover {
+  opacity: 1;
+  color: var(--text);
+}
+
+.desperate-mode.active {
+  opacity: 1;
+  color: var(--text);
+}
+
+/* Toast Notification */
+.toast-container {
+  position: fixed;
+  bottom: 2rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+  pointer-events: none;
+}
+
+.toast {
+  background: var(--text);
+  color: var(--bg);
+  padding: 0.75rem 1.25rem;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.3s, transform 0.3s;
+  max-width: 90vw;
+  text-align: center;
+}
+
+.toast.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Achievement Popup */
+.achievement-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s;
+}
+
+.achievement-overlay.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.achievement-popup {
+  background: var(--bg);
+  border: 1px solid var(--text-muted);
+  padding: 2rem;
+  text-align: center;
+  max-width: 400px;
+  transform: scale(0.9);
+  transition: transform 0.3s;
+}
+
+.achievement-overlay.show .achievement-popup {
+  transform: scale(1);
+}
+
+.achievement-badge {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+}
+
+.achievement-title {
+  font-size: 1.2rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
+.achievement-message {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-bottom: 1.5rem;
+}
+
+.achievement-dismiss {
+  background: none;
+  border: 1px solid var(--text-muted);
+  color: var(--text);
+  padding: 0.5rem 1rem;
+  font-family: 'Space Mono', monospace;
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.achievement-dismiss:hover {
+  background: var(--text);
+  color: var(--bg);
+  border-color: var(--text);
+}
+
+/* Confetti Canvas */
+#confetti-canvas {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1999;
 }
 
 /* Reduced motion */
