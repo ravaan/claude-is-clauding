@@ -470,39 +470,22 @@
         }
 
         case 'flip': {
-          // Soft page turn sound - gentle filtered noise whoosh
-          const bufferSize = ctx.sampleRate * 0.15; // 150ms
-          const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
-          const data = buffer.getChannelData(0);
-
-          // Create soft noise that fades
-          for (let i = 0; i < bufferSize; i++) {
-            const t = i / bufferSize;
-            // Envelope: quick attack, smooth decay
-            const envelope = Math.sin(t * Math.PI) * Math.exp(-t * 3);
-            data[i] = (Math.random() * 2 - 1) * envelope;
-          }
-
-          const noise = ctx.createBufferSource();
-          noise.buffer = buffer;
-
-          // Low-pass filter for soft, muffled sound
-          const filter = ctx.createBiquadFilter();
-          filter.type = 'lowpass';
-          filter.frequency.setValueAtTime(800, ctx.currentTime);
-          filter.frequency.exponentialRampToValueAtTime(300, ctx.currentTime + 0.1);
-          filter.Q.setValueAtTime(1, ctx.currentTime);
-
-          // Very subtle gain
+          // Soft, muted thump - like a book page settling
+          const osc = ctx.createOscillator();
           const gain = ctx.createGain();
-          gain.gain.setValueAtTime(0.08, ctx.currentTime);
-          gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.15);
 
-          noise.connect(filter);
-          filter.connect(gain);
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(150, ctx.currentTime);
+          osc.frequency.exponentialRampToValueAtTime(60, ctx.currentTime + 0.1);
+
+          gain.gain.setValueAtTime(0.15, ctx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.12);
+
+          osc.connect(gain);
           gain.connect(ctx.destination);
 
-          noise.start(ctx.currentTime);
+          osc.start(ctx.currentTime);
+          osc.stop(ctx.currentTime + 0.15);
           break;
         }
       }
