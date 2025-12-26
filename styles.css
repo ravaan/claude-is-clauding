@@ -1,0 +1,245 @@
+/* CSS Variables for theming */
+:root {
+  --bg: #0a0a0a;
+  --text: #fafafa;
+  --text-muted: #666;
+  --transition-speed: 0.3s;
+  --slot-height: 120px;
+  --animation-duration: 0.8s;
+}
+
+[data-theme="light"] {
+  --bg: #fafafa;
+  --text: #0a0a0a;
+  --text-muted: #999;
+}
+
+/* Reset & Base */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: 16px;
+}
+
+body {
+  font-family: 'Space Mono', monospace;
+  background-color: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  min-height: 100dvh;
+  transition: background-color var(--transition-speed), color var(--transition-speed);
+  overflow: hidden;
+}
+
+/* Layout */
+.container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  min-height: 100dvh;
+  padding: 2rem;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+/* Header */
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 2rem;
+}
+
+h1 {
+  font-size: clamp(0.9rem, 2.5vw, 1.2rem);
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  opacity: 0.7;
+}
+
+/* Theme Toggle */
+#theme-toggle {
+  background: none;
+  border: 1px solid var(--text-muted);
+  border-radius: 50%;
+  width: 44px;
+  height: 44px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: border-color var(--transition-speed), transform 0.2s;
+  position: relative;
+}
+
+#theme-toggle:hover {
+  border-color: var(--text);
+  transform: scale(1.05);
+}
+
+#theme-toggle .sun,
+#theme-toggle .moon {
+  font-size: 1.3rem;
+  position: absolute;
+  transition: opacity var(--transition-speed), transform var(--transition-speed);
+  color: var(--text);
+}
+
+#theme-toggle .sun {
+  opacity: 0;
+  transform: rotate(-90deg);
+}
+
+#theme-toggle .moon {
+  opacity: 1;
+  transform: rotate(0deg);
+}
+
+[data-theme="light"] #theme-toggle .sun {
+  opacity: 1;
+  transform: rotate(0deg);
+}
+
+[data-theme="light"] #theme-toggle .moon {
+  opacity: 0;
+  transform: rotate(90deg);
+}
+
+/* Main / Slot Machine */
+main {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.slot-machine {
+  width: 100%;
+  text-align: center;
+}
+
+.slot-window {
+  overflow: hidden;
+  height: var(--slot-height);
+  position: relative;
+}
+
+/* Each idea is absolutely positioned */
+.idea {
+  position: absolute;
+  width: 100%;
+  height: var(--slot-height);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  font-size: clamp(1.5rem, 5vw, 2.8rem);
+  font-weight: 700;
+  line-height: 1.2;
+  padding: 0 1rem;
+  letter-spacing: -0.03em;
+  top: 0;
+  left: 0;
+}
+
+/* Current idea - visible */
+.idea.current {
+  transform: translateY(0);
+}
+
+/* Outgoing idea - slides down and out */
+.idea.leaving {
+  animation: slideDown var(--animation-duration) cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+/* Incoming idea - starts above, slides down into view */
+.idea.entering {
+  transform: translateY(-100%);
+  animation: slideInFromTop var(--animation-duration) cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes slideDown {
+  0% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(100%);
+    opacity: 0.3;
+  }
+}
+
+@keyframes slideInFromTop {
+  0% {
+    transform: translateY(-100%);
+    opacity: 0.3;
+  }
+  40% {
+    opacity: 1;
+  }
+  /* Overshoot slightly */
+  75% {
+    transform: translateY(4%);
+  }
+  /* Bounce back */
+  90% {
+    transform: translateY(-1%);
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Footer */
+footer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding-top: 2rem;
+}
+
+.made-with-love {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .idea.leaving,
+  .idea.entering {
+    animation: none;
+  }
+
+  .idea.leaving {
+    opacity: 0;
+  }
+
+  .idea.entering {
+    transform: translateY(0);
+    opacity: 1;
+  }
+
+  #theme-toggle .sun,
+  #theme-toggle .moon {
+    transition: opacity var(--transition-speed);
+  }
+}
+
+/* Mobile adjustments */
+@media (max-width: 600px) {
+  :root {
+    --slot-height: 100px;
+  }
+
+  .container {
+    padding: 1.5rem;
+  }
+
+  .idea {
+    font-size: clamp(1.2rem, 6vw, 1.8rem);
+  }
+}

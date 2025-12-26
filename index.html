@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Fun ideas for what to do while Claude AI is working on your tasks">
+  <meta name="theme-color" content="#0a0a0a">
+  <title>What To Do When Claude Is Clauding</title>
+
+  <!-- Favicon -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⏳</text></svg>">
+
+  <!-- Preload critical resources -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+
+  <!-- Inline critical CSS to prevent FOUC -->
+  <style>
+    :root{--bg:#0a0a0a;--text:#fafafa}
+    [data-theme="light"]{--bg:#fafafa;--text:#0a0a0a}
+    body{background-color:var(--bg);color:var(--text);margin:0}
+  </style>
+  <link rel="stylesheet" href="styles.css">
+
+  <!-- Initialize theme before render to prevent flash -->
+  <script>
+    (function(){
+      var t=localStorage.getItem('theme');
+      if(t)document.documentElement.setAttribute('data-theme',t);
+      else if(window.matchMedia('(prefers-color-scheme:light)').matches)
+        document.documentElement.setAttribute('data-theme','light');
+    })();
+  </script>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>While Claude is clauding...</h1>
+      <button id="theme-toggle" aria-label="Toggle theme">
+        <span class="sun">&#9788;</span>
+        <span class="moon">&#9790;</span>
+      </button>
+    </header>
+
+    <main>
+      <div class="slot-machine">
+        <div class="slot-window">
+          <!-- Ideas are dynamically inserted here -->
+        </div>
+      </div>
+    </main>
+
+    <footer>
+      <span class="made-with-love">Made with love while Claude was clauding</span>
+    </footer>
+  </div>
+
+  <script src="ideas.js" defer></script>
+  <script src="app.js" defer></script>
+</body>
+</html>
