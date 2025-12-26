@@ -6,6 +6,332 @@
   const CYCLE_INTERVAL = 3500;
   const STORAGE_KEY = 'claudeIsClauding';
   const TOAST_DURATION = 3000;
+  const MIXPANEL_TOKEN = 'c76010059cae91934663231b4d174a47';
+
+  // ===== ANALYTICS =====
+  const Analytics = {
+    initialized: false,
+    sessionId: null,
+
+    init() {
+      if (typeof mixpanel === 'undefined') {
+        console.warn('Mixpanel not loaded');
+        return;
+      }
+
+      mixpanel.init(MIXPANEL_TOKEN, {
+        debug: false,
+        track_pageview: false, // We'll track manually with more context
+        persistence: 'localStorage',
+        ignore_dnt: false
+      });
+
+      this.sessionId = this.generateSessionId();
+      this.initialized = true;
+
+      // Set super properties that persist across all events
+      mixpanel.register({
+        'Platform': this.getPlatform(),
+        'Screen Width': window.innerWidth,
+        'Screen Height': window.innerHeight,
+        'Viewport': this.getViewportSize(),
+        'User Agent': navigator.userAgent,
+        'Referrer': document.referrer || 'direct',
+        'Session ID': this.sessionId
+      });
+    },
+
+    generateSessionId() {
+      return 'sess_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+    },
+
+    getPlatform() {
+      const ua = navigator.userAgent;
+      if (/iPhone|iPad|iPod/.test(ua)) return 'iOS';
+      if (/Android/.test(ua)) return 'Android';
+      if (/Mac/.test(ua)) return 'Mac';
+      if (/Windows/.test(ua)) return 'Windows';
+      if (/Linux/.test(ua)) return 'Linux';
+      return 'Unknown';
+    },
+
+    getViewportSize() {
+      if (window.innerWidth < 480) return 'Mobile';
+      if (window.innerWidth < 768) return 'Tablet';
+      if (window.innerWidth < 1200) return 'Desktop';
+      return 'Large Desktop';
+    },
+
+    // Core tracking method
+    track(eventName, properties = {}) {
+      if (!this.initialized || typeof mixpanel === 'undefined') return;
+
+      const enrichedProps = {
+        ...properties,
+        'Timestamp': new Date().toISOString(),
+        'Page URL': window.location.href,
+        'Session Duration (sec)': Math.floor(getSessionDuration() / 1000)
+      };
+
+      mixpanel.track(eventName, enrichedProps);
+    },
+
+    // Identify user (for returning visitors)
+    identify(userId, traits = {}) {
+      if (!this.initialized || typeof mixpanel === 'undefined') return;
+      mixpanel.identify(userId);
+      if (Object.keys(traits).length > 0) {
+        mixpanel.people.set(traits);
+      }
+    },
+
+    // Increment user property
+    increment(property, value = 1) {
+      if (!this.initialized || typeof mixpanel === 'undefined') return;
+      mixpanel.people.increment(property, value);
+    },
+
+    // Set user property once (first time only)
+    setOnce(properties) {
+      if (!this.initialized || typeof mixpanel === 'undefined') return;
+      mixpanel.people.set_once(properties);
+    },
+
+    // Time an event
+    timeEvent(eventName) {
+      if (!this.initialized || typeof mixpanel === 'undefined') return;
+      mixpanel.time_event(eventName);
+    },
+
+    // ===== SPECIFIC EVENT TRACKERS =====
+
+    // Session events
+    trackSessionStart(storage) {
+      this.track('Session Started', {
+        'Visit Number': storage.siteVisits,
+        'Is Returning User': storage.siteVisits > 1,
+        'Total Ideas Seen (Lifetime)': storage.totalIdeasSeen,
+        'Achievements Unlocked Count': storage.achievementsUnlocked.length,
+        'Theme': document.documentElement.getAttribute('data-theme') || 'dark',
+        'Sounds Enabled': storage.soundsEnabled,
+        'Is Desperate Mode Active': storage.desperateModeActive,
+        'Is Retro Mode Active': storage.retroModeActive
+      });
+
+      // Set user properties
+      this.setOnce({
+        '$created': new Date().toISOString(),
+        'First Visit': new Date().toISOString()
+      });
+
+      this.increment('Total Sessions');
+
+      // Time the session for duration tracking
+      this.timeEvent('Session Ended');
+    },
+
+    trackPageView() {
+      this.track('Page Viewed', {
+        'Page Title': document.title,
+        'Is Midnight Hour': isMidnight(),
+        'Is Friday': isFriday()
+      });
+    },
+
+    // Idea events
+    trackIdeaViewed(idea, storage, method = 'auto') {
+      this.track('Idea Viewed', {
+        'Idea ID': idea.id,
+        'Idea Text': idea.text,
+        'Idea Category': idea.category,
+        'Idea Rarity': idea.rarity || 'common',
+        'Time Restriction': idea.timeRestriction || 'none',
+        'Session Ideas Count': storage.sessionIdeasSeen,
+        'Total Ideas Seen': storage.totalIdeasSeen,
+        'Ideas Seen Today': storage.ideasSeenToday,
+        'Is New Idea': !storage.seenIdeaIds.includes(idea.id),
+        'Trigger Method': method, // 'auto', 'keyboard', 'click'
+        'Desperate Mode Active': storage.desperateModeActive
+      });
+
+      this.increment('Total Ideas Viewed');
+    },
+
+    trackIdeaSkipped(idea, method) {
+      this.track('Idea Skipped', {
+        'Idea ID': idea.id,
+        'Idea Text': idea.text,
+        'Skip Method': method // 'keyboard_space', 'keyboard_enter', 'keyboard_arrow'
+      });
+    },
+
+    // Achievement events
+    trackAchievementUnlocked(achievementId, achievementData) {
+      this.track('Achievement Unlocked', {
+        'Achievement ID': achievementId,
+        'Achievement Message': achievementData.message || '',
+        'Achievement Title': achievementData.title || achievementId,
+        'Session Ideas At Unlock': getStorage().sessionIdeasSeen,
+        'Session Duration At Unlock (sec)': Math.floor(getSessionDuration() / 1000)
+      });
+
+      this.increment('Achievements Unlocked');
+    },
+
+    trackMilestoneReached(milestone, count) {
+      this.track('Milestone Reached', {
+        'Milestone Type': milestone,
+        'Count': count,
+        'Session Duration (sec)': Math.floor(getSessionDuration() / 1000)
+      });
+    },
+
+    // UI interaction events
+    trackThemeToggled(newTheme) {
+      this.track('Theme Toggled', {
+        'New Theme': newTheme,
+        'Previous Theme': newTheme === 'light' ? 'dark' : 'light'
+      });
+    },
+
+    trackSoundToggled(soundsEnabled) {
+      this.track('Sound Toggled', {
+        'Sounds Enabled': soundsEnabled
+      });
+    },
+
+    // Easter egg events
+    trackEasterEggTriggered(eggType, details = {}) {
+      this.track('Easter Egg Triggered', {
+        'Easter Egg Type': eggType,
+        ...details
+      });
+
+      this.increment('Easter Eggs Found');
+    },
+
+    trackKonamiCodeActivated(retroModeActive) {
+      this.track('Konami Code Entered', {
+        'Retro Mode Now Active': retroModeActive
+      });
+      this.trackEasterEggTriggered('konami_code', { 'Retro Mode Active': retroModeActive });
+    },
+
+    trackSpecialIdeaFound(idea, specialType) {
+      this.track('Special Idea Found', {
+        'Idea ID': idea.id,
+        'Special Type': specialType, // 'lucky', 'unlucky', 'programmer'
+        'Idea Text': idea.text
+      });
+      this.trackEasterEggTriggered('special_idea', { 'Type': specialType, 'Idea ID': idea.id });
+    },
+
+    trackHeaderTripleClick(newTagline) {
+      this.track('Header Triple Clicked', {
+        'New Tagline': newTagline
+      });
+      this.trackEasterEggTriggered('header_triple_click');
+    },
+
+    trackFooterTripleClick(newMessage) {
+      this.track('Footer Triple Clicked', {
+        'New Message': newMessage
+      });
+      this.trackEasterEggTriggered('footer_triple_click');
+    },
+
+    trackHelpRequested(method) {
+      this.track('Help Requested', {
+        'Method': method // 'typed_help', 'question_mark'
+      });
+    },
+
+    // Mode events
+    trackDesperateModeActivated() {
+      this.track('Desperate Mode Activated', {
+        'Session Ideas At Activation': getStorage().sessionIdeasSeen,
+        'Session Duration (sec)': Math.floor(getSessionDuration() / 1000)
+      });
+    },
+
+    trackRetroModeToggled(isActive) {
+      this.track('Retro Mode Toggled', {
+        'Is Active': isActive
+      });
+    },
+
+    // Engagement events
+    trackIdleDetected(idleMinutes) {
+      this.track('User Idle Detected', {
+        'Idle Duration (min)': idleMinutes
+      });
+    },
+
+    trackUserReturned(idleMinutes) {
+      this.track('User Returned From Idle', {
+        'Idle Duration (min)': idleMinutes
+      });
+    },
+
+    trackConsecutiveIdeaClicks(ideaId, clickCount) {
+      if (clickCount === 3) {
+        this.track('Same Idea Clicked 3 Times', {
+          'Idea ID': ideaId
+        });
+        this.trackEasterEggTriggered('triple_same_idea', { 'Idea ID': ideaId });
+      }
+    },
+
+    trackTimeMilestone(milestone, duration) {
+      this.track('Time Milestone Reached', {
+        'Milestone': milestone, // '30min', '1hour', '2hours', '3hours'
+        'Duration (min)': duration
+      });
+    },
+
+    // Toast events
+    trackToastShown(message, toastType = 'info') {
+      this.track('Toast Shown', {
+        'Message': message,
+        'Toast Type': toastType // 'info', 'achievement', 'milestone', 'easter_egg'
+      });
+    },
+
+    // Achievement popup events
+    trackAchievementPopupShown(badge, title) {
+      this.track('Achievement Popup Shown', {
+        'Badge': badge,
+        'Title': title
+      });
+    },
+
+    trackAchievementPopupDismissed(title) {
+      this.track('Achievement Popup Dismissed', {
+        'Title': title
+      });
+    },
+
+    // Visibility events
+    trackVisibilityChange(isHidden) {
+      this.track('Tab Visibility Changed', {
+        'Is Hidden': isHidden,
+        'Session Duration (sec)': Math.floor(getSessionDuration() / 1000)
+      });
+    },
+
+    // Session end (called on page unload)
+    trackSessionEnd() {
+      const storage = getStorage();
+      this.track('Session Ended', {
+        'Session Ideas Seen': storage.sessionIdeasSeen,
+        'Session Duration (sec)': Math.floor(getSessionDuration() / 1000),
+        'Final Theme': document.documentElement.getAttribute('data-theme') || 'dark',
+        'Final Sounds Enabled': storage.soundsEnabled,
+        'Desperate Mode Was Active': storage.desperateModeActive,
+        'Retro Mode Was Active': storage.retroModeActive
+      });
+    }
+  };
 
   // Rarity weights (higher = more likely)
   const RARITY_WEIGHTS = {
@@ -181,7 +507,10 @@
   }
 
   // ===== ACHIEVEMENT POPUP =====
+  let currentAchievementTitle = '';
+
   function showAchievementPopup(badge, title, message) {
+    currentAchievementTitle = title;
     achievementBadge.textContent = badge;
     achievementTitle.textContent = title;
     achievementMessage.textContent = message;
@@ -189,10 +518,17 @@
 
     // Trigger confetti
     triggerConfetti();
+    playSound('celebration');
+
+    Analytics.trackAchievementPopupShown(badge, title);
   }
 
   function hideAchievementPopup() {
     achievementOverlay.classList.remove('show');
+    if (currentAchievementTitle) {
+      Analytics.trackAchievementPopupDismissed(currentAchievementTitle);
+      currentAchievementTitle = '';
+    }
   }
 
   // ===== CONFETTI =====
@@ -300,6 +636,7 @@
       storage.desperateModeActive = true;
       setStorage(storage);
       updateDesperateModeUI(storage);
+      Analytics.trackDesperateModeActivated();
     }
   }
 
@@ -330,6 +667,8 @@
     if (minutes >= 30 && !hasAchievement('time_30min')) {
       unlockAchievement('time_30min');
       showToast(TIME_MESSAGES.thirtyMin);
+      Analytics.trackTimeMilestone('30min', 30);
+      Analytics.trackAchievementUnlocked('time_30min', { message: TIME_MESSAGES.thirtyMin });
     }
 
     // Hour milestones
@@ -338,12 +677,18 @@
       if (hours === 1 && !hasAchievement('time_1hour')) {
         unlockAchievement('time_1hour');
         showToast(TIME_MESSAGES.hour1);
+        Analytics.trackTimeMilestone('1hour', 60);
+        Analytics.trackAchievementUnlocked('time_1hour', { message: TIME_MESSAGES.hour1 });
       } else if (hours === 2 && !hasAchievement('time_2hours')) {
         unlockAchievement('time_2hours');
         showToast(TIME_MESSAGES.hour2);
+        Analytics.trackTimeMilestone('2hours', 120);
+        Analytics.trackAchievementUnlocked('time_2hours', { message: TIME_MESSAGES.hour2 });
       } else if (hours === 3 && !hasAchievement('time_3hours')) {
         unlockAchievement('time_3hours');
         showToast(TIME_MESSAGES.hour3);
+        Analytics.trackTimeMilestone('3hours', 180);
+        Analytics.trackAchievementUnlocked('time_3hours', { message: TIME_MESSAGES.hour3 });
       }
     }
   }
@@ -510,6 +855,7 @@
     setStorage(storage);
     updateSoundToggleUI();
     showToast(soundsEnabled ? "Sounds on" : "Sounds off");
+    Analytics.trackSoundToggled(soundsEnabled);
   }
 
   function updateSoundToggleUI() {
@@ -554,6 +900,8 @@
       document.body.classList.remove('retro-mode');
       showToast("Retro mode deactivated");
     }
+    Analytics.trackKonamiCodeActivated(storage.retroModeActive);
+    Analytics.trackRetroModeToggled(storage.retroModeActive);
   }
 
   function initRetroMode() {
@@ -588,6 +936,7 @@
 
   function showHelpToast() {
     showToast("Space/Enter: next | T: theme | S: sound | secrets await...");
+    Analytics.trackHelpRequested(typedKeys.includes('help') ? 'typed_help' : 'question_mark');
   }
 
   // ===== TRIPLE-CLICK HEADER =====
@@ -623,6 +972,7 @@
     const h1 = document.querySelector('h1');
     if (h1) {
       h1.textContent = TAGLINES[taglineIndex];
+      Analytics.trackHeaderTripleClick(TAGLINES[taglineIndex]);
     }
   }
 
@@ -632,6 +982,7 @@
       consecutiveClicks++;
       if (consecutiveClicks === 3) {
         showToast("Really? This one again?");
+        Analytics.trackConsecutiveIdeaClicks(ideaId, consecutiveClicks);
         consecutiveClicks = 0;
       }
     } else {
@@ -657,12 +1008,14 @@
         triggerSparkles();
       }
       showToast(special.message);
+      Analytics.trackSpecialIdeaFound(idea, special.type);
       return true;
     }
 
     // 0.1% chance of self-aware message
     if (Math.random() < 0.001) {
       showToast("ERROR: Idea generator is now self-aware");
+      Analytics.trackEasterEggTriggered('self_aware_message');
       return true;
     }
 
@@ -831,6 +1184,8 @@
     if (idleTime >= fiveMinutes && !hasAchievement('idle_5min')) {
       unlockAchievement('idle_5min');
       showToast("Hello? You still there?");
+      Analytics.trackIdleDetected(5);
+      Analytics.trackAchievementUnlocked('idle_5min', { message: "Hello? You still there?" });
     }
   }
 
@@ -853,6 +1208,7 @@
     if (storage.siteVisits === 5) {
       setTimeout(() => {
         showToast("Welcome back, procrastinator");
+        Analytics.trackMilestoneReached('5_visits', 5);
       }, 1500);
     }
 
@@ -862,6 +1218,7 @@
       unlockAchievement('same_day_return');
       setTimeout(() => {
         showToast("Back again? Claude must be working hard");
+        Analytics.trackAchievementUnlocked('same_day_return', { message: "Back again? Claude must be working hard" });
       }, 2000);
     }
   }
@@ -895,6 +1252,7 @@
       setTimeout(() => {
         footerSpan.textContent = FOOTER_MESSAGES[footerMessageIndex];
         footerSpan.style.opacity = '';
+        Analytics.trackFooterTripleClick(FOOTER_MESSAGES[footerMessageIndex]);
       }, 200);
     }
   }
@@ -973,6 +1331,7 @@
     const next = current === 'light' ? 'dark' : 'light';
     document.documentElement.setAttribute('data-theme', next);
     localStorage.setItem('theme', next);
+    Analytics.trackThemeToggled(next);
   }
 
   // ===== IDEA DISPLAY =====
@@ -985,9 +1344,18 @@
     return el;
   }
 
-  function showNextIdea() {
+  // Track how the idea was triggered
+  let ideaTriggerMethod = 'auto';
+
+  function showNextIdea(method = 'auto') {
     if (isAnimating) return;
     isAnimating = true;
+    ideaTriggerMethod = method;
+
+    // Track that current idea was skipped (if there is one)
+    if (currentIdea && method !== 'auto') {
+      Analytics.trackIdeaSkipped(currentIdea, method);
+    }
 
     const nextIdea = selectNextIdea();
     const currentEl = slotWindow.querySelector('.idea.current');
@@ -1019,6 +1387,9 @@
       checkSpecialIdea(nextIdea);
       trackIdeaClick(nextIdea.id);
       resetActivity(); // Reset idle timer on new idea
+
+      // Track idea viewed with method
+      Analytics.trackIdeaViewed(nextIdea, storage, ideaTriggerMethod);
     }, ANIMATION_DURATION);
   }
 
@@ -1030,6 +1401,8 @@
     if (count === MILESTONES.ideas10.count && !hasAchievement(MILESTONES.ideas10.id)) {
       unlockAchievement(MILESTONES.ideas10.id);
       showToast(MILESTONES.ideas10.message);
+      Analytics.trackAchievementUnlocked(MILESTONES.ideas10.id, MILESTONES.ideas10);
+      Analytics.trackMilestoneReached('10_ideas', count);
     }
 
     // 50 ideas - activate desperate mode
@@ -1037,6 +1410,8 @@
       unlockAchievement(MILESTONES.ideas50.id);
       activateDesperateMode();
       showToast(MILESTONES.ideas50.message);
+      Analytics.trackAchievementUnlocked(MILESTONES.ideas50.id, MILESTONES.ideas50);
+      Analytics.trackMilestoneReached('50_ideas_desperate_mode', count);
     }
 
     // 100 ideas - achievement popup with confetti
@@ -1047,6 +1422,8 @@
         MILESTONES.ideas100.title,
         MILESTONES.ideas100.message
       );
+      Analytics.trackAchievementUnlocked(MILESTONES.ideas100.id, MILESTONES.ideas100);
+      Analytics.trackMilestoneReached('100_ideas', count);
       // Delayed hint about secrets
       setTimeout(() => {
         showToast("Hint: Old school gamers know a code...");
@@ -1057,6 +1434,8 @@
     if (count === MILESTONES.ideas420.count && !hasAchievement(MILESTONES.ideas420.id)) {
       unlockAchievement(MILESTONES.ideas420.id);
       showToast(MILESTONES.ideas420.message);
+      Analytics.trackAchievementUnlocked(MILESTONES.ideas420.id, MILESTONES.ideas420);
+      Analytics.trackMilestoneReached('420_ideas', count);
     }
   }
 
@@ -1081,6 +1460,9 @@
   }
 
   async function init() {
+    // Initialize analytics first
+    Analytics.init();
+
     await loadIdeas();
 
     if (ideas.length === 0) {
@@ -1090,6 +1472,10 @@
 
     const storage = initSession();
 
+    // Track session start and page view
+    Analytics.trackSessionStart(storage);
+    Analytics.trackPageView();
+
     // Show first idea
     slotWindow.innerHTML = '';
     const firstIdea = selectNextIdea();
@@ -1098,6 +1484,10 @@
     slotWindow.appendChild(firstEl);
 
     incrementIdeaCounter(firstIdea.id);
+
+    // Track first idea viewed
+    Analytics.trackIdeaViewed(firstIdea, getStorage(), 'initial_load');
+
     resetTimer();
     startTimeCheck();
     startIdleCheck();
@@ -1151,7 +1541,9 @@
 
       if (e.key === ' ' || e.key === 'ArrowRight' || e.key === 'Enter') {
         e.preventDefault();
-        showNextIdea();
+        // Track with specific keyboard method
+        const method = e.key === ' ' ? 'keyboard_space' : (e.key === 'Enter' ? 'keyboard_enter' : 'keyboard_arrow');
+        showNextIdea(method);
         resetTimer();
       }
       if (e.key === 't' || e.key === 'T') {
@@ -1171,6 +1563,7 @@
         clearInterval(intervalId);
         stopTimeCheck();
         stopIdleCheck();
+        Analytics.trackVisibilityChange(true);
       } else {
         resetTimer();
         startTimeCheck();
@@ -1178,7 +1571,13 @@
         resetActivity();
         // Check immediately when returning
         checkTimeMilestones();
+        Analytics.trackVisibilityChange(false);
       }
+    });
+
+    // Track session end on page unload
+    window.addEventListener('beforeunload', () => {
+      Analytics.trackSessionEnd();
     });
   }
 
