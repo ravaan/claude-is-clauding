@@ -72,8 +72,15 @@ h1 {
   opacity: 0.7;
 }
 
+/* Header Buttons */
+.header-buttons {
+  display: flex;
+  gap: 0.75rem;
+}
+
 /* Theme Toggle */
-#theme-toggle {
+#theme-toggle,
+#sound-toggle {
   background: none;
   border: 1px solid var(--text-muted);
   border-radius: 50%;
@@ -87,13 +94,16 @@ h1 {
   position: relative;
 }
 
-#theme-toggle:hover {
+#theme-toggle:hover,
+#sound-toggle:hover {
   border-color: var(--text);
   transform: scale(1.05);
 }
 
 #theme-toggle .sun,
-#theme-toggle .moon {
+#theme-toggle .moon,
+#sound-toggle .sound-on,
+#sound-toggle .sound-off {
   font-size: 1.3rem;
   position: absolute;
   transition: opacity var(--transition-speed), transform var(--transition-speed);
@@ -118,6 +128,23 @@ h1 {
 [data-theme="light"] #theme-toggle .moon {
   opacity: 0;
   transform: rotate(90deg);
+}
+
+/* Sound Toggle */
+#sound-toggle .sound-on {
+  opacity: 1;
+}
+
+#sound-toggle .sound-off {
+  opacity: 0;
+}
+
+#sound-toggle.muted .sound-on {
+  opacity: 0;
+}
+
+#sound-toggle.muted .sound-off {
+  opacity: 1;
 }
 
 /* Main / Slot Machine */
@@ -419,16 +446,20 @@ body.retro-mode {
   text-shadow: none;
 }
 
-.retro-mode #theme-toggle {
+.retro-mode #theme-toggle,
+.retro-mode #sound-toggle {
   border-color: #006600;
 }
 
-.retro-mode #theme-toggle:hover {
+.retro-mode #theme-toggle:hover,
+.retro-mode #sound-toggle:hover {
   border-color: #00ff00;
 }
 
 .retro-mode #theme-toggle .sun,
-.retro-mode #theme-toggle .moon {
+.retro-mode #theme-toggle .moon,
+.retro-mode #sound-toggle .sound-on,
+.retro-mode #sound-toggle .sound-off {
   color: #00ff00;
 }
 

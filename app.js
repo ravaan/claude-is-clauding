@@ -38,6 +38,7 @@
 
   // ===== DOM ELEMENTS =====
   const themeToggle = document.getElementById('theme-toggle');
+  const soundToggle = document.getElementById('sound-toggle');
   const slotWindow = document.querySelector('.slot-window');
   const toastEl = document.getElementById('toast');
   const achievementOverlay = document.getElementById('achievement-overlay');
@@ -361,6 +362,7 @@
   function initAudio() {
     const storage = getStorage();
     soundsEnabled = storage.soundsEnabled;
+    updateSoundToggleUI();
   }
 
   function getAudioContext() {
@@ -505,7 +507,18 @@
     const storage = getStorage();
     storage.soundsEnabled = soundsEnabled;
     setStorage(storage);
+    updateSoundToggleUI();
     showToast(soundsEnabled ? "Sounds on" : "Sounds off");
+  }
+
+  function updateSoundToggleUI() {
+    if (soundToggle) {
+      if (soundsEnabled) {
+        soundToggle.classList.remove('muted');
+      } else {
+        soundToggle.classList.add('muted');
+      }
+    }
   }
 
   // ===== KONAMI CODE EASTER EGG =====
@@ -549,9 +562,15 @@
     }
   }
 
-  // ===== TYPE "HELP" EASTER EGG =====
+  // ===== TYPE "HELP" OR "?" EASTER EGG =====
   function checkTypedWord(key) {
-    // Only track letter keys
+    // Show help on "?" key
+    if (key === '?') {
+      showHelpToast();
+      return;
+    }
+
+    // Track letter keys for "help" word
     if (key.length === 1 && /[a-z]/i.test(key)) {
       typedKeys += key.toLowerCase();
       // Keep only last 10 characters
@@ -561,13 +580,13 @@
 
       if (typedKeys.includes('help')) {
         typedKeys = '';
-        showHelpModal();
+        showHelpToast();
       }
     }
   }
 
-  function showHelpModal() {
-    showToast("Space/Enter: next idea | T: toggle theme | S: toggle sound");
+  function showHelpToast() {
+    showToast("Space/Enter: next | T: theme | S: sound | ?: help");
   }
 
   // ===== TRIPLE-CLICK HEADER =====
@@ -1083,6 +1102,7 @@
 
     // Event listeners
     themeToggle.addEventListener('click', toggleTheme);
+    soundToggle.addEventListener('click', toggleSound);
     achievementDismiss.addEventListener('click', hideAchievementPopup);
 
     // Triple-click header easter egg
