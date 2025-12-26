@@ -24,6 +24,18 @@
     ideas420: { count: 420, id: 'ideas_420', message: "Okay you're just procrastinating now" }
   };
 
+  // Footer messages for easter egg
+  const FOOTER_MESSAGES = [
+    "Made with love while Claude was clauding",
+    "Procrastination as a Service",
+    "No AIs were harmed making this",
+    "Time flies when you're avoiding work",
+    "Your future self will thank you... maybe",
+    "Productivity is overrated anyway",
+    "Claude is still thinking...",
+    "404: Motivation not found"
+  ];
+
   // ===== DOM ELEMENTS =====
   const themeToggle = document.getElementById('theme-toggle');
   const slotWindow = document.querySelector('.slot-window');
@@ -271,15 +283,23 @@
 
   // ===== DESPERATE MODE =====
   function updateDesperateModeUI(storage) {
+    const footerSpan = document.querySelector('.made-with-love');
+
     if (storage.desperateModeUnlocked) {
       desperateModeBtn.classList.add('unlocked');
     }
     if (storage.desperateModeActive) {
       desperateModeBtn.classList.add('active');
-      desperateModeBtn.textContent = 'desperate mode (on)';
+      // Update footer text to show desperate mode is active
+      if (footerSpan) {
+        footerSpan.textContent = 'desperate mode';
+      }
     } else {
       desperateModeBtn.classList.remove('active');
-      desperateModeBtn.textContent = 'desperate mode';
+      // Reset footer text
+      if (footerSpan) {
+        footerSpan.textContent = FOOTER_MESSAGES[0];
+      }
     }
   }
 
@@ -290,12 +310,6 @@
     storage.desperateModeActive = !storage.desperateModeActive;
     setStorage(storage);
     updateDesperateModeUI(storage);
-
-    if (storage.desperateModeActive) {
-      showToast("Entering the void...");
-    } else {
-      showToast("Back to normal");
-    }
   }
 
   // ===== TIME HELPERS =====
@@ -844,16 +858,6 @@
   }
 
   // ===== FOOTER EASTER EGG =====
-  const FOOTER_MESSAGES = [
-    "Made with love while Claude was clauding",
-    "Procrastination as a Service",
-    "No AIs were harmed making this",
-    "Time flies when you're avoiding work",
-    "Your future self will thank you... maybe",
-    "Productivity is overrated anyway",
-    "Claude is still thinking...",
-    "404: Motivation not found"
-  ];
   let footerMessageIndex = 0;
   let footerClickTimer = null;
   let footerClicks = 0;
