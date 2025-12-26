@@ -50,6 +50,10 @@
   let consecutiveClicks = 0;
   let audioContext = null;
   let soundsEnabled = true;
+  let idleCheckIntervalId = null;
+  let lastActivityTime = Date.now();
+  let hoverTimeout = null;
+  let footerClickCount = 0;
 
   // ===== STORAGE SYSTEM =====
   const defaultStorage = {
@@ -801,6 +805,106 @@
     }, 500);
   }
 
+  // ===== VISUAL QUIRKS =====
+
+  // Hover >5 seconds: idea drifts upward
+  function setupHoverDrift() {
+    slotWindow.addEventListener('mouseenter', () => {
+      hoverTimeout = setTimeout(() => {
+        const currentEl = slotWindow.querySelector('.idea.current');
+        if (currentEl) {
+          currentEl.classList.add('drifting');
+        }
+      }, 5000);
+    });
+
+    slotWindow.addEventListener('mouseleave', () => {
+      if (hoverTimeout) {
+        clearTimeout(hoverTimeout);
+        hoverTimeout = null;
+      }
+      const currentEl = slotWindow.querySelector('.idea.current');
+      if (currentEl) {
+        currentEl.classList.remove('drifting');
+      }
+    });
+  }
+
+  // Idle 5 minutes: show message
+  function resetActivity() {
+    lastActivityTime = Date.now();
+  }
+
+  function checkIdle() {
+    const idleTime = Date.now() - lastActivityTime;
+    const fiveMinutes = 5 * 60 * 1000;
+
+    if (idleTime >= fiveMinutes && !hasAchievement('idle_5min')) {
+      unlockAchievement('idle_5min');
+      showToast("Hello? You still there?");
+    }
+  }
+
+  function startIdleCheck() {
+    idleCheckIntervalId = setInterval(checkIdle, 30000); // Check every 30s
+  }
+
+  function stopIdleCheck() {
+    if (idleCheckIntervalId) {
+      clearInterval(idleCheckIntervalId);
+    }
+  }
+
+  // Cursed ideas: subtle screen shake
+  function checkCursedIdea(idea) {
+    if (idea.category === 'cursed') {
+      triggerScreenShake();
+    }
+  }
+
+  // ===== RETURNING USER FEATURES =====
+  function checkReturningUser() {
+    const storage = getStorage();
+
+    // After 5 visits: welcome back
+    if (storage.siteVisits === 5) {
+      setTimeout(() => {
+        showToast("Welcome back, procrastinator");
+      }, 1500);
+    }
+
+    // Same day return
+    const today = new Date().toDateString();
+    if (storage.siteVisits > 1 && storage.lastVisitDate === today && !hasAchievement('same_day_return')) {
+      unlockAchievement('same_day_return');
+      setTimeout(() => {
+        showToast("Back again? Claude must be working hard");
+      }, 2000);
+    }
+  }
+
+  // ===== FOOTER EASTER EGG =====
+  const FOOTER_MESSAGES = [
+    "Made with love while Claude was clauding",
+    "Procrastination as a Service",
+    "No AIs were harmed making this",
+    "Still loading... just like your project",
+    "Time well spent, probably"
+  ];
+  let footerMessageIndex = 0;
+
+  function cycleFooterMessage() {
+    footerMessageIndex = (footerMessageIndex + 1) % FOOTER_MESSAGES.length;
+    const footerSpan = document.querySelector('.made-with-love');
+    if (footerSpan) {
+      footerSpan.style.opacity = '0';
+      setTimeout(() => {
+        footerSpan.textContent = FOOTER_MESSAGES[footerMessageIndex];
+        footerSpan.style.opacity = '';
+      }, 200);
+    }
+  }
+
   // ===== IDEA SELECTION =====
   function filterIdeasByTime(ideasList) {
     const midnight = isMidnight();
@@ -920,7 +1024,9 @@
       const storage = incrementIdeaCounter(nextIdea.id);
       checkAchievements(storage);
       checkSpecialIdea(nextIdea);
+      checkCursedIdea(nextIdea);
       trackIdeaClick(nextIdea.id);
+      resetActivity(); // Reset idle timer on new idea
     }, ANIMATION_DURATION);
   }
 
@@ -1001,8 +1107,11 @@
     incrementIdeaCounter(firstIdea.id);
     resetTimer();
     startTimeCheck();
+    startIdleCheck();
     initAudio();
     initRetroMode();
+    setupHoverDrift();
+    checkReturningUser();
 
     // Event listeners
     themeToggle.addEventListener('click', toggleTheme);
@@ -1015,6 +1124,13 @@
       header.addEventListener('click', handleHeaderClick);
     }
 
+    // Footer easter egg - click to cycle messages
+    const footerSpan = document.querySelector('.made-with-love');
+    if (footerSpan) {
+      footerSpan.addEventListener('click', cycleFooterMessage);
+      footerSpan.style.cursor = 'pointer';
+    }
+
     // Close achievement on overlay click
     achievementOverlay.addEventListener('click', (e) => {
       if (e.target === achievementOverlay) {
@@ -1024,6 +1140,8 @@
 
     // Keyboard support
     document.addEventListener('keydown', (e) => {
+      resetActivity(); // Reset idle timer on any key press
+
       // Close achievement popup on escape
       if (e.key === 'Escape') {
         hideAchievementPopup();
@@ -1049,14 +1167,20 @@
       }
     });
 
+    // Reset activity on mouse movement
+    document.addEventListener('mousemove', resetActivity);
+
     // Pause on visibility change
     document.addEventListener('visibilitychange', () => {
       if (document.hidden) {
         clearInterval(intervalId);
         stopTimeCheck();
+        stopIdleCheck();
       } else {
         resetTimer();
         startTimeCheck();
+        startIdleCheck();
+        resetActivity();
         // Check immediately when returning
         checkTimeMilestones();
       }

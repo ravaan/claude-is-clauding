@@ -461,3 +461,22 @@ h1 {
   cursor: pointer;
   user-select: none;
 }
+
+/* Hover drift effect */
+@keyframes drift {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+.idea.drifting {
+  animation: drift 2s ease-in-out infinite;
+}
+
+/* Footer clickable */
+.made-with-love {
+  transition: opacity 0.2s;
+}

@@ -2,9 +2,9 @@
 
 ## Project Status
 - **Total Tasks:** 25
-- **Completed:** 16
+- **Completed:** 19
 - **In Progress:** 0
-- **Remaining:** 9
+- **Remaining:** 6
 - **Last Updated:** 2025-12-27
 
 ---
@@ -127,26 +127,26 @@
 
 ---
 
-## Phase 4: Low Priority Tasks [1/5]
+## Phase 4: Low Priority Tasks [4/5]
 
 ### Task 4.1: Visual quirks
-- [ ] Hover >5 seconds: idea drifts upward
-- [ ] Idle 5 minutes: "Hello? You still there? 👋"
-- [ ] Cursed ideas: subtle screen shake
-- **Status:** Not started
+- [x] Hover >5 seconds: idea drifts upward
+- [x] Idle 5 minutes: "Hello? You still there?"
+- [x] Cursed ideas: subtle screen shake
+- **Status:** COMPLETE
 
 ### Task 4.2: Returning user features
-- [ ] After 5 visits: welcome back message
-- [ ] Same day return: special message
-- **Status:** Not started
+- [x] After 5 visits: welcome back message
+- [x] Same day return: special message
+- **Status:** COMPLETE
 
 ### Task 4.3: Footer easter egg
-- [ ] Click to cycle messages
-- [ ] "Made while Claude worked"
-- [ ] "Procrastination as a Service"
-- [ ] "No AIs were harmed in making this"
-- [ ] "Still loading... just like your project"
-- **Status:** Not started
+- [x] Click to cycle messages
+- [x] "Procrastination as a Service"
+- [x] "No AIs were harmed making this"
+- [x] "Still loading... just like your project"
+- [x] "Time well spent, probably"
+- **Status:** COMPLETE
 
 ### Task 4.4: Milestone - 420 ideas
 - [x] Toast: "Okay you're just procrastinating now"
@@ -171,6 +171,7 @@
 | TBD | 2.3-2.5, 4.4 | Milestone achievements: toasts, desperate mode, confetti | 2025-12-27 |
 | TBD | 2.6 | Time-based behaviors: 30min and hourly notifications | 2025-12-27 |
 | TBD | 3.1-3.6 | Easter eggs: Konami, triple-click, help, rare events, audio | 2025-12-27 |
+| TBD | 4.1-4.3 | Visual quirks, returning user features, footer easter egg | 2025-12-27 |
 
 ---
 
