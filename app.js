@@ -114,6 +114,7 @@
     storage.siteVisits++;
     storage.sessionIdeasSeen = 0;
     storage.sessionStartTime = Date.now();
+    storage.desperateModeActive = false;  // Reset desperate mode each session
 
     setStorage(storage);
 
