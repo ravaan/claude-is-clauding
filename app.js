@@ -893,6 +893,9 @@
     getSessionDuration,
     isReturningUser,
     showToast,
-    triggerConfetti
+    triggerConfetti,
+    triggerSparkles,
+    playSound,
+    toggleSound
   };
 })();
