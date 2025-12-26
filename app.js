@@ -40,7 +40,6 @@
   const themeToggle = document.getElementById('theme-toggle');
   const slotWindow = document.querySelector('.slot-window');
   const toastEl = document.getElementById('toast');
-  const desperateModeBtn = document.getElementById('desperate-mode');
   const achievementOverlay = document.getElementById('achievement-overlay');
   const achievementBadge = document.getElementById('achievement-badge');
   const achievementTitle = document.getElementById('achievement-title');
@@ -76,7 +75,6 @@
     sessionStartTime: null,
     achievementsUnlocked: [],
     seenIdeaIds: [],
-    desperateModeUnlocked: false,
     desperateModeActive: false,
     retroModeActive: false,
     soundsEnabled: true
@@ -283,33 +281,23 @@
 
   // ===== DESPERATE MODE =====
   function updateDesperateModeUI(storage) {
-    const footerSpan = document.querySelector('.made-with-love');
-
-    if (storage.desperateModeUnlocked) {
-      desperateModeBtn.classList.add('unlocked');
-    }
-    if (storage.desperateModeActive) {
-      desperateModeBtn.classList.add('active');
-      // Update footer text to show desperate mode is active
-      if (footerSpan) {
-        footerSpan.textContent = 'desperate mode';
-      }
-    } else {
-      desperateModeBtn.classList.remove('active');
-      // Reset footer text
-      if (footerSpan) {
-        footerSpan.textContent = FOOTER_MESSAGES[0];
+    const indicator = document.getElementById('desperate-indicator');
+    if (indicator) {
+      if (storage.desperateModeActive) {
+        indicator.classList.add('visible');
+      } else {
+        indicator.classList.remove('visible');
       }
     }
   }
 
-  function toggleDesperateMode() {
+  function activateDesperateMode() {
     const storage = getStorage();
-    if (!storage.desperateModeUnlocked) return;
-
-    storage.desperateModeActive = !storage.desperateModeActive;
-    setStorage(storage);
-    updateDesperateModeUI(storage);
+    if (!storage.desperateModeActive) {
+      storage.desperateModeActive = true;
+      setStorage(storage);
+      updateDesperateModeUI(storage);
+    }
   }
 
   // ===== TIME HELPERS =====
@@ -908,10 +896,14 @@
     return ideasList.filter(idea => idea.category === category);
   }
 
-  function getWeightedRandomIdea(ideasList) {
+  function getWeightedRandomIdea(ideasList, categoryBoosts = {}) {
     let totalWeight = 0;
     const weightedIdeas = ideasList.map(idea => {
-      const weight = RARITY_WEIGHTS[idea.rarity] || RARITY_WEIGHTS.common;
+      let weight = RARITY_WEIGHTS[idea.rarity] || RARITY_WEIGHTS.common;
+      // Apply category boost if specified
+      if (categoryBoosts[idea.category]) {
+        weight *= categoryBoosts[idea.category];
+      }
       totalWeight += weight;
       return { idea, weight };
     });
@@ -928,27 +920,22 @@
   function selectNextIdea() {
     const storage = getStorage();
     let availableIdeas = filterIdeasByTime(ideas);
+    let categoryBoosts = {};
 
-    // Desperate mode - only cursed ideas
+    // Desperate mode - 5x boost for cursed ideas
     if (storage.desperateModeActive) {
-      availableIdeas = filterIdeasByCategory(availableIdeas, 'cursed');
+      categoryBoosts.cursed = 5;
     }
 
     // Midnight mode - boost cursed and existential
-    if (isMidnight() && !storage.desperateModeActive) {
-      const boostedCategories = ['cursed', 'existential'];
-      const boostedIdeas = availableIdeas.filter(i => boostedCategories.includes(i.category));
-      if (boostedIdeas.length > 0 && Math.random() < 0.4) {
-        availableIdeas = boostedIdeas;
-      }
+    if (isMidnight()) {
+      categoryBoosts.cursed = (categoryBoosts.cursed || 1) * 2;
+      categoryBoosts.existential = 2;
     }
 
     // After 420 ideas, boost meta category
     if (storage.totalIdeasSeen >= 420) {
-      const metaIdeas = availableIdeas.filter(i => i.category === 'meta');
-      if (metaIdeas.length > 0 && Math.random() < 0.3) {
-        availableIdeas = metaIdeas;
-      }
+      categoryBoosts.meta = 3;
     }
 
     // Avoid showing same idea twice in a row
@@ -956,7 +943,7 @@
       availableIdeas = availableIdeas.filter(i => i.id !== currentIdea.id);
     }
 
-    return getWeightedRandomIdea(availableIdeas);
+    return getWeightedRandomIdea(availableIdeas, categoryBoosts);
   }
 
   // ===== THEME =====
@@ -1024,13 +1011,10 @@
       showToast(MILESTONES.ideas10.message);
     }
 
-    // 50 ideas - unlock desperate mode
+    // 50 ideas - activate desperate mode
     if (count === MILESTONES.ideas50.count && !hasAchievement(MILESTONES.ideas50.id)) {
       unlockAchievement(MILESTONES.ideas50.id);
-      const updatedStorage = getStorage();
-      updatedStorage.desperateModeUnlocked = true;
-      setStorage(updatedStorage);
-      updateDesperateModeUI(updatedStorage);
+      activateDesperateMode();
       showToast(MILESTONES.ideas50.message);
     }
 
@@ -1098,7 +1082,6 @@
 
     // Event listeners
     themeToggle.addEventListener('click', toggleTheme);
-    desperateModeBtn.addEventListener('click', toggleDesperateMode);
     achievementDismiss.addEventListener('click', hideAchievementPopup);
 
     // Triple-click header easter egg

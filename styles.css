@@ -219,32 +219,23 @@ footer {
   color: var(--text-muted);
 }
 
-/* Desperate Mode Button */
-.desperate-mode {
+/* Desperate Mode Indicator */
+.desperate-indicator {
   font-size: 0.7rem;
-  color: var(--text-muted);
-  background: none;
-  border: none;
-  cursor: pointer;
+  color: var(--text);
   opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.3s, color 0.3s;
-  font-family: 'Space Mono', monospace;
+  transition: opacity 0.3s;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
-.desperate-mode.unlocked {
-  opacity: 0.6;
-  pointer-events: auto;
+.desperate-indicator.visible {
+  opacity: 0.8;
 }
 
-.desperate-mode.unlocked:hover {
-  opacity: 1;
-  color: var(--text);
-}
-
-.desperate-mode.active {
-  opacity: 1;
-  color: var(--text);
+/* Desperate Mode Button - hidden, auto-activates at 50 ideas */
+.desperate-mode {
+  display: none;
 }
 
 /* Toast Notification */
