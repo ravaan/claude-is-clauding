@@ -4,7 +4,7 @@
   --text: #fafafa;
   --text-muted: #666;
   --transition-speed: 0.3s;
-  --slot-height: 120px;
+  --slot-min-height: 120px;
   --animation-duration: 0.8s;
 }
 
@@ -164,25 +164,34 @@ main {
 
 .slot-window {
   overflow: hidden;
-  height: var(--slot-height);
+  min-height: var(--slot-min-height);
   position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-/* Each idea is absolutely positioned */
+/* Each idea - uses relative positioning for natural height */
 .idea {
-  position: absolute;
   width: 100%;
-  height: var(--slot-height);
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: center;
   font-size: clamp(1.5rem, 5vw, 2.8rem);
   font-weight: 700;
   line-height: 1.2;
-  padding: 0 1rem;
+  padding: 1rem;
   letter-spacing: -0.03em;
+  text-align: center;
+}
+
+/* For animation, we need absolute positioning */
+.idea.entering,
+.idea.leaving {
+  position: absolute;
   top: 0;
   left: 0;
+  min-height: var(--slot-min-height);
 }
 
 /* Current idea - visible */
@@ -395,7 +404,7 @@ footer {
 /* Mobile adjustments */
 @media (max-width: 600px) {
   :root {
-    --slot-height: 100px;
+    --slot-min-height: 100px;
   }
 
   .container {
