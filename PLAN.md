@@ -2,9 +2,9 @@
 
 ## Project Status
 - **Total Tasks:** 25
-- **Completed:** 3
+- **Completed:** 5
 - **In Progress:** 0
-- **Remaining:** 22
+- **Remaining:** 20
 - **Last Updated:** 2025-12-27
 
 ---
@@ -41,23 +41,25 @@
 
 ---
 
-## Phase 2: High Priority Tasks [0/6]
+## Phase 2: High Priority Tasks [2/6]
 
 ### Task 2.1: Implement localStorage tracking system
-- [ ] Create tracking object structure
-- [ ] Implement incrementIdeaCounter()
-- [ ] Implement checkAchievements()
-- [ ] Implement getSessionDuration()
-- [ ] Implement isReturningUser()
-- [ ] Persist data across sessions
-- **Status:** Not started
+- [x] Create tracking object structure
+- [x] Implement incrementIdeaCounter()
+- [x] Implement checkAchievements() (stub for now)
+- [x] Implement getSessionDuration()
+- [x] Implement isReturningUser()
+- [x] Persist data across sessions
+- **Status:** COMPLETE
 
 ### Task 2.2: Update app.js to use new ideas.json
-- [ ] Load ideas from JSON
-- [ ] Implement weighted randomness based on rarity
-- [ ] Respect time restrictions (midnight, friday, hour)
-- [ ] Track clicked idea IDs
-- **Status:** Not started
+- [x] Load ideas from JSON (async fetch)
+- [x] Implement weighted randomness based on rarity
+- [x] Respect time restrictions (midnight, friday, hour)
+- [x] Track clicked idea IDs
+- [x] Midnight mode boosts cursed/existential
+- [x] Desperate mode filtering
+- **Status:** COMPLETE
 
 ### Task 2.3: Milestone achievements - 10 ideas
 - [ ] Toast notification: "Still waiting? Wow, Claude must be building something epic 🚀"
@@ -163,7 +165,8 @@
 
 | Commit | Task | Description | Date |
 |--------|------|-------------|------|
-| TBD | 1.1-1.3 | Add ideas.json with 508 categorized ideas | 2025-12-27 |
+| 668dca7 | 1.1-1.3 | Add ideas.json with 508 categorized ideas | 2025-12-27 |
+| TBD | 2.1-2.2 | localStorage tracking + ideas.json integration | 2025-12-27 |
 
 ---
 
